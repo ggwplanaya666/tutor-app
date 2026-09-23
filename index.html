@@ -38,7 +38,6 @@
       background: radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
     }
 
-    /* Инпуты с защитой от белого фона на iOS */
     input, textarea, select {
       background-color: #171B26 !important;
       color: #FFFFFF !important;
@@ -64,7 +63,6 @@
       box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
     }
 
-    /* Пульсация кнопки микрофона */
     @keyframes pulse-ring {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7); }
       70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(147, 51, 234, 0); }
@@ -147,12 +145,10 @@
 
   <!-- ПЛАВАЮЩИЙ ГОЛОСОВОЙ АССИСТЕНТ -->
   <div class="fixed bottom-6 right-6 flex flex-col items-end z-40">
-    <!-- Всплывающий статус речи -->
-    <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/90 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-lg shadow-black/50 max-w-[240px] truncate">
+    <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-lg shadow-black/50 max-w-[260px] truncate">
       Слушаю...
     </div>
     
-    <!-- Кнопка микрофона -->
     <button id="voiceBtn" onclick="toggleVoice()" class="w-14 h-14 rounded-2xl bg-[#1A1F2C] border border-white/10 flex items-center justify-center text-white shadow-2xl active:scale-90 transition">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
@@ -458,40 +454,52 @@
     };
 
     // ==========================================
-    // ГОЛОСОВОЙ ПОМОЩНИК (SPEECH ASSISTANT)
+    // ГОЛОСОВОЙ ПОМОЩНИК
     // ==========================================
     let recognition = null;
     let isListening = false;
+    let accumulatedTranscript = '';
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
       recognition.lang = 'ru-RU';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
       recognition.onstart = () => {
         isListening = true;
+        accumulatedTranscript = '';
         document.getElementById('voiceBtn').classList.add('mic-active');
         const st = document.getElementById('voiceStatus');
-        st.innerText = 'Слушаю вас...';
+        st.innerText = 'Слушаю... Нажмите еще раз для стопа';
         st.classList.remove('hidden');
         haptic('light');
       };
 
       recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        const st = document.getElementById('voiceStatus');
-        st.innerText = `«${text}»`;
-        parseVoiceCommand(text);
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) {
+            accumulatedTranscript += ' ' + e.results[i][0].transcript;
+          } else {
+            interim += e.results[i][0].transcript;
+          }
+        }
+        const currentDisplay = (accumulatedTranscript + ' ' + interim).trim();
+        if (currentDisplay) {
+          document.getElementById('voiceStatus').innerText = `«${currentDisplay}»`;
+        }
       };
 
-      recognition.onerror = () => {
-        stopVoice();
+      recognition.onerror = (err) => {
+        console.error('Speech error:', err);
       };
 
       recognition.onend = () => {
-        stopVoice();
+        if (isListening) {
+          try { recognition.start(); } catch(e) {}
+        }
       };
     }
 
@@ -500,27 +508,26 @@
         if (tg?.showAlert) tg.showAlert('Голосовой ввод не поддерживается на этом устройстве.');
         return;
       }
+
       if (isListening) {
+        isListening = false;
         recognition.stop();
+        document.getElementById('voiceBtn').classList.remove('mic-active');
+
+        const finalCommand = accumulatedTranscript.trim();
+        if (finalCommand) {
+          parseVoiceCommand(finalCommand);
+        } else {
+          document.getElementById('voiceStatus').classList.add('hidden');
+        }
       } else {
+        accumulatedTranscript = '';
         recognition.start();
       }
     }
 
-    function stopVoice() {
-      isListening = false;
-      document.getElementById('voiceBtn').classList.remove('mic-active');
-      setTimeout(() => {
-        document.getElementById('voiceStatus').classList.add('hidden');
-      }, 3000);
-    }
-
-    // Парсер естественного языка для команд
-    function parseVoiceCommand(raw) {
-      const txt = raw.toLowerCase();
+    function extractDateFromText(txt) {
       let targetDate = new Date(selectedDate);
-
-      // Определение относительных дат
       if (txt.includes('сегодня')) {
         targetDate = new Date();
       } else if (txt.includes('вчера')) {
@@ -530,7 +537,6 @@
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + 1);
       } else {
-        // Поиск конкретного числа: "21 сентября", "5 октября", "21-е число"
         const numMatch = txt.match(/(\d{1,2})\s*(январ|феврал|март|апрел|ма|июн|июл|август|сентябр|октябр|ноябр|декабр)?/);
         if (numMatch) {
           const dayNum = parseInt(numMatch[1], 10);
@@ -542,10 +548,50 @@
           }
         }
       }
+      return targetDate;
+    }
 
+    function parseVoiceCommand(raw) {
+      const txt = raw.toLowerCase().trim();
+      const targetDate = extractDateFromText(txt);
       const targetISO = toISO(targetDate);
+      const statusBanner = document.getElementById('voiceStatus');
 
-      // СЦЕНАРИЙ 1: Смена статуса ("был урок", "проведён", "отменён", "состоялся")
+      // 1. УДАЛЕНИЕ
+      if (txt.includes('удали') || txt.includes('удалить') || txt.includes('убери') || txt.includes('сотри')) {
+        const idx = lessons.findIndex(l => l.date === targetISO);
+        if (idx !== -1) {
+          const deleted = lessons.splice(idx, 1)[0];
+          saveData();
+          haptic('warning');
+          statusBanner.innerText = `Урок (${deleted.student}) удален`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+          return;
+        } else {
+          statusBanner.innerText = `На дату ${targetISO} уроков нет`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+          return;
+        }
+      }
+
+      // 2. ИЗМЕНЕНИЕ ИМЕНИ
+      if (txt.includes('имя') || txt.includes('назови') || txt.includes('переименуй')) {
+        const nameMatch = txt.match(/(?:на|ученика|имя)\s+([А-Яа-яA-Za-z]+)/);
+        if (nameMatch) {
+          const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+          let targetLesson = lessons.find(l => l.date === targetISO) || lessons.find(l => l.date === toISO(selectedDate));
+          if (targetLesson) {
+            targetLesson.student = newName;
+            saveData();
+            haptic('success');
+            statusBanner.innerText = `Имя обновлено: ${newName}`;
+            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+            return;
+          }
+        }
+      }
+
+      // 3. СМЕНА СТАТУСА
       if (txt.includes('проведен') || txt.includes('проведён') || txt.includes('был урок') || txt.includes('состоялся')) {
         const found = lessons.find(l => l.date === targetISO);
         if (found) {
@@ -554,11 +600,13 @@
           currentDate = new Date(targetDate);
           saveData();
           haptic('success');
+          statusBanner.innerText = `Статус: проведён`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         }
       }
 
-      if (txt.includes('отменен') || txt.includes('отменён') || txt.includes('не был')) {
+      if (txt.includes('отменен') || txt.includes('отменён') || txt.includes('не состоялся') || txt.includes('не был')) {
         const found = lessons.find(l => l.date === targetISO);
         if (found) {
           found.status = 'canceled';
@@ -566,13 +614,14 @@
           currentDate = new Date(targetDate);
           saveData();
           haptic('warning');
+          statusBanner.innerText = `Статус: отменён`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         }
       }
 
-      // СЦЕНАРИЙ 2: Создание урока ("добавить урок", "запиши", "новый урок")
-      if (txt.includes('добав') || txt.includes('запиш') || txt.includes('урок')) {
-        // Поиск времени ("в 15:00", "в 14", "16 30")
+      // 4. ДОБАВЛЕНИЕ УРОКА
+      if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь')) {
         let time = '14:00';
         const timeMatch = txt.match(/(?:в\s*)?(\d{1,2})(?::(\d{2})|\s+(\d{2}))?/);
         if (timeMatch && parseInt(timeMatch[1]) < 24) {
@@ -581,14 +630,12 @@
           time = `${hh}:${mm}`;
         }
 
-        // Поиск цены ("за 2000", "1500 рублей", "2500")
         let price = 2000;
         const priceMatch = txt.match(/(\d{3,6})\s*(?:руб|р|₽)?/);
         if (priceMatch) {
           price = Number(priceMatch[1]);
         }
 
-        // Имя ученика
         let student = 'Новый ученик';
         const nameMatch = txt.match(/(?:с|ученик|для)\s+([А-Яа-яA-Za-z]+)/);
         if (nameMatch) {
@@ -609,7 +656,13 @@
         currentDate = new Date(targetDate);
         saveData();
         haptic('success');
+        statusBanner.innerText = `Урок добавлен: ${student}`;
+        setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+        return;
       }
+
+      statusBanner.innerText = 'Команда не распознана';
+      setTimeout(() => statusBanner.classList.add('hidden'), 3000);
     }
 
     loadData();
