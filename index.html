@@ -45,7 +45,7 @@
       -webkit-appearance: none;
       appearance: none;
     }
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: #6366F1 !important;
       outline: none;
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
@@ -81,178 +81,78 @@
     .modal-enter {
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-
-    /* ==================================================== */
-    /* 3D WHEEL CAROUSEL: ОТДАЛЕННАЯ ПАНОРАМНАЯ ПЕРСПЕКТИВА */
-    /* ==================================================== */
-    .wheel-stage {
-      perspective: 1600px;
-      width: 100%;
-      height: 270px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      touch-action: pan-y;
-      position: relative;
-    }
-    
-    .wheel-orbit {
-      width: 130px;
-      height: 130px;
-      position: relative;
-      transform-style: preserve-3d;
-      transform: rotateX(-10deg);
-      transition: transform 0.5s cubic-bezier(0.2, 0.85, 0.3, 1);
-    }
-
-    .wheel-item {
-      position: absolute;
-      width: 130px;
-      height: 130px;
-      left: 0;
-      top: 0;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 18px 35px -8px rgba(0, 0, 0, 0.7);
-      border: 3px solid rgba(255, 255, 255, 0.18);
-      cursor: pointer;
-      user-select: none;
-      transition: filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
-      background-clip: padding-box;
-    }
-
-    .wheel-item.is-selected {
-      border-color: #FFFFFF;
-      box-shadow: 0 0 25px rgba(99, 102, 241, 0.6), 0 20px 40px rgba(0,0,0,0.8);
-      opacity: 1 !important;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)) !important;
-    }
-
-    .wheel-item.is-dimmed {
-      opacity: 0.32;
-      filter: blur(1.5px) grayscale(40%);
-    }
-
-    /* Нижний стеклянный TabBar */
-    .tabbar-blur {
-      background: rgba(15, 18, 26, 0.9);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
   </style>
 </head>
-<body class="p-4 pb-32 select-none">
+<body class="p-4 pb-28 select-none">
 
-  <!-- ============================================== -->
-  <!-- ВКЛАДКА 1: ОСНОВНОЙ ЖУРНАЛ И ДОХОД             -->
-  <!-- ============================================== -->
-  <main id="tabJournal" class="space-y-5">
-    <header class="flex items-center justify-between pt-1">
-      <div>
-        <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
-        <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
+  <!-- ШАПКА -->
+  <header class="flex items-center justify-between pt-1 mb-4">
+    <div>
+      <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
+      <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
+    </div>
+    <div class="flex items-center gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
+      <!-- Кнопка экспорта отчета -->
+      <button onclick="exportMonthCSV()" title="Экспорт в Excel/CSV" class="p-2 text-indigo-400 hover:text-white active:scale-90 transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </button>
+      <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button id="nextMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- КАРТОЧКИ ДОХОДА -->
+  <section class="grid grid-cols-2 gap-3 mb-5">
+    <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход за месяц</span>
+      <p id="monthTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+      <div class="flex items-center gap-1.5 mt-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span id="monthCompletedStat" class="text-[11px] text-slate-400 font-medium">0 уроков</span>
       </div>
-      <div class="flex gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
-        <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <button id="nextMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </header>
-
-    <section class="grid grid-cols-2 gap-3">
-      <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
-        <p id="monthTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
-        <div class="flex items-center gap-1.5 mt-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span id="monthCompletedStat" class="text-[11px] text-slate-400 font-medium">0 уроков</span>
-        </div>
-      </div>
-
-      <div class="glass-card glow-purple p-4 rounded-2xl relative overflow-hidden">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Выбранный день</span>
-        <p id="dayTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
-        <div class="flex items-center gap-1.5 mt-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-          <span id="dayLessonsStat" class="text-[11px] text-slate-400 font-medium">0 занятий</span>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none"></div>
-    </section>
-
-    <section>
-      <div class="flex items-center justify-between mb-3 px-1">
-        <div class="flex items-center gap-2">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Занятия</h2>
-          <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
-        </div>
-        <button onclick="openModalForCreate()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Новый урок
-        </button>
-      </div>
-
-      <div id="lessonsList" class="space-y-3"></div>
-    </section>
-  </main>
-
-  <!-- ============================================== -->
-  <!-- ВКЛАДКА 2: ВЫБОР АВАТАРОК (ОТДАЛЕННОЕ КОЛЕСО) -->
-  <!-- ============================================== -->
-  <main id="tabProfile" class="hidden space-y-6 pt-2">
-    <header class="text-center">
-      <span class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">Персонализация</span>
-      <h2 class="text-2xl font-bold text-white mt-1">Оригами-Аватар</h2>
-      <p class="text-xs text-slate-400 mt-1">Свайпайте колесо или используйте стрелки</p>
-    </header>
-
-    <div class="glass-card p-5 rounded-3xl border border-white/10 flex flex-col items-center relative overflow-hidden">
-      <!-- 3D Сцена с увеличенной глубиной и отдалением -->
-      <div id="stageEl" class="wheel-stage my-1">
-        <div id="avatarWheel" class="wheel-orbit">
-          <!-- Ячейки аватаров рендерятся из JS -->
-        </div>
-      </div>
-
-      <!-- Кнопки управления вращением -->
-      <div class="flex items-center gap-4 mt-3 z-10">
-        <button onclick="rotateWheel(-1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <button onclick="confirmSelectedAvatar()" class="px-7 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs tracking-wider uppercase shadow-xl shadow-indigo-600/30 active:scale-95 transition">
-          Установить аватар
-        </button>
-        <button onclick="rotateWheel(1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-
-      <p id="currentAvatarName" class="text-base font-extrabold text-indigo-300 mt-4 tracking-wide">Лазурный Дракончик</p>
     </div>
 
-    <div class="glass-card p-4 rounded-2xl flex items-center gap-3.5">
-      <div id="previewCurrentAvatar" class="w-13 h-13 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20 p-0.5"></div>
-      <div>
-        <h4 class="text-sm font-bold text-white">Текущий талисман активен</h4>
-        <p class="text-xs text-slate-400 mt-0.5">Синхронизируется в таб-баре и облаке Telegram</p>
+    <div class="glass-card glow-purple p-4 rounded-2xl relative overflow-hidden">
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Выбранный день</span>
+      <p id="dayTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+      <div class="flex items-center gap-1.5 mt-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+        <span id="dayLessonsStat" class="text-[11px] text-slate-400 font-medium">0 занятий</span>
       </div>
     </div>
-  </main>
+  </section>
 
-  <!-- ============================================== -->
-  <!-- ПЛАВАЮЩИЙ МИКРОФОН (Ассистент)                 -->
-  <!-- ============================================== -->
-  <div id="floatingVoiceWrap" class="fixed bottom-24 right-5 flex flex-col items-end z-40">
+  <!-- ГОРИЗОНТАЛЬНЫЙ КАЛЕНДАРЬ -->
+  <section class="mb-6">
+    <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none"></div>
+  </section>
+
+  <!-- СПИСОК УРОКОВ -->
+  <section>
+    <div class="flex items-center justify-between mb-3 px-1">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Занятия</h2>
+        <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
+      </div>
+      <button onclick="openModalForCreate()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Новый урок
+      </button>
+    </div>
+
+    <div id="lessonsList" class="space-y-3"></div>
+  </section>
+
+  <!-- ПЛАВАЮЩИЙ МИКРОФОН (ГОЛОСОВОЙ ПОМОЩНИК) -->
+  <div id="floatingVoiceWrap" class="fixed bottom-6 right-6 flex flex-col items-end z-40">
     <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-2xl max-w-[280px] break-words">
       Слушаю...
     </div>
@@ -266,36 +166,7 @@
     </button>
   </div>
 
-  <!-- ============================================== -->
-  <!-- TAB BAR                                        -->
-  <!-- ============================================== -->
-  <nav class="fixed bottom-0 left-0 right-0 h-20 tabbar-blur flex items-center justify-around px-8 z-40">
-    <button id="tabBtnJournal" onclick="switchTab('journal')" class="flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95">
-      <div class="p-1 rounded-xl">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-          <circle cx="8" cy="14" r="1" fill="currentColor"></circle>
-          <circle cx="12" cy="14" r="1" fill="currentColor"></circle>
-          <circle cx="16" cy="14" r="1" fill="currentColor"></circle>
-        </svg>
-      </div>
-      <span class="text-[10px] font-bold tracking-wider uppercase">Журнал</span>
-    </button>
-
-    <button id="tabBtnProfile" onclick="switchTab('profile')" class="flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95">
-      <div id="tabBarAvatarWrapper" class="w-7 h-7 rounded-full overflow-hidden border border-white/25 transition-transform flex items-center justify-center">
-        <!-- Аватарка в таббаре -->
-      </div>
-      <span class="text-[10px] font-bold tracking-wider uppercase">Аватар</span>
-    </button>
-  </nav>
-
-  <!-- ============================================== -->
-  <!-- МОДАЛЬНОЕ ОКНО                                 -->
-  <!-- ============================================== -->
+  <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ / РЕДАКТИРОВАНИЯ -->
   <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeModal()">
     <div class="min-h-full flex items-end sm:items-center justify-center">
       <div id="modalContainer" class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[24px] p-6 space-y-4 pb-48 sm:pb-6">
@@ -355,6 +226,22 @@
           </div>
         </div>
 
+        <!-- ТУМБЛЕР РЕГУЛЯРНОГО УРОКА -->
+        <div id="repeatSection" class="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-white">Повторять каждую неделю</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Автоматически создать расписание</p>
+            </div>
+            <input type="checkbox" id="inRepeatToggle" onchange="toggleRepeatOptions(this.checked)" class="w-5 h-5 rounded-lg text-indigo-600 focus:ring-0">
+          </div>
+          <div id="repeatOptions" class="hidden grid-cols-3 gap-2 pt-1 border-t border-white/5">
+            <button type="button" onclick="setRepeatWeeks(4)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white" data-weeks="4">4 недели</button>
+            <button type="button" onclick="setRepeatWeeks(8)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-[#171B26] text-slate-400 border border-white/5" data-weeks="8">8 недель</button>
+            <button type="button" onclick="setRepeatWeeks(12)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-[#171B26] text-slate-400 border border-white/5" data-weeks="12">12 недель</button>
+          </div>
+        </div>
+
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
           <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none" onfocus="handleInputFocus(this)"></textarea>
@@ -363,6 +250,45 @@
         <button onclick="saveLesson()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition">
           Сохранить занятие
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА УЧЕНИКА -->
+  <div id="studentModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeStudentModal()">
+    <div class="min-h-full flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[24px] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-1 sm:hidden"></div>
+        
+        <div class="flex items-center justify-between pb-1">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Профиль ученика</span>
+            <h3 id="studentModalName" class="text-xl font-bold text-white tracking-tight">Алиса</h3>
+          </div>
+          <button onclick="closeStudentModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
+        </div>
+
+        <!-- Статистика ученика -->
+        <div class="grid grid-cols-3 gap-2">
+          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Принёс</span>
+            <p id="studentStatEarned" class="text-base font-extrabold text-emerald-400 mt-1">0 ₽</p>
+          </div>
+          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Проведено</span>
+            <p id="studentStatDone" class="text-base font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Отменено</span>
+            <p id="studentStatCanceled" class="text-base font-extrabold text-rose-400 mt-1">0</p>
+          </div>
+        </div>
+
+        <!-- История занятий -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">История занятий</h4>
+          <div id="studentHistoryList" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -377,245 +303,10 @@
       if (tg.setBackgroundColor) tg.setBackgroundColor('#0B0D13');
     }
 
-    // ========================================================
-    // КРУПНЫЕ ГРАФИЧЕСКИЕ ОРИГАМИ-АВАТАРКИ (В СТИЛЕ РЕФЕРЕНСА)
-    // ========================================================
-    const AVATARS = [
-      {
-        id: 'dragon',
-        name: 'Лазурный Дракончик',
-        bg: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <polygon points="50,8 72,32 58,44 86,56 50,92 28,62 44,46 22,34" fill="#34D399"/>
-          <polygon points="50,8 58,44 50,92 38,52" fill="#059669"/>
-          <polygon points="72,32 94,36 86,56" fill="#6EE7B7"/>
-          <polygon points="22,34 6,36 28,62" fill="#047857"/>
-          <polygon points="50,92 68,74 58,68" fill="#10B981"/>
-          <polygon points="50,8 60,20 50,26 40,20" fill="#A7F3D0"/>
-        </svg>`
-      },
-      {
-        id: 'fox',
-        name: 'Огненный Лис',
-        bg: 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <polygon points="50,16 74,48 50,86 26,48" fill="#FB923C"/>
-          <polygon points="50,16 74,48 50,86" fill="#EA580C"/>
-          <polygon points="26,48 10,20 34,32" fill="#FDBA74"/>
-          <polygon points="74,48 90,20 66,32" fill="#9A3412"/>
-          <polygon points="40,74 50,86 60,74" fill="#FFFFFF"/>
-          <polygon points="46,82 50,86 54,82" fill="#1E293B"/>
-        </svg>`
-      },
-      {
-        id: 'cat',
-        name: 'Сиамский Кот',
-        bg: 'linear-gradient(135deg, #38BDF8 0%, #0369A1 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <polygon points="24,18 44,38 18,58" fill="#0F172A"/>
-          <polygon points="76,18 56,38 82,58" fill="#1E293B"/>
-          <polygon points="44,38 56,38 72,82 28,82" fill="#E2E8F0"/>
-          <polygon points="50,38 50,82 28,82" fill="#CBD5E1"/>
-          <polygon points="38,50 50,56 62,50" fill="#0284C7"/>
-          <polygon points="46,62 50,66 54,62" fill="#0F172A"/>
-        </svg>`
-      },
-      {
-        id: 'panda',
-        name: 'Оригами Панда',
-        bg: 'linear-gradient(135deg, #A855F7 0%, #6B21A8 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <circle cx="50" cy="52" r="36" fill="#F8FAFC"/>
-          <polygon points="20,24 36,40 16,46" fill="#1E1B4B"/>
-          <polygon points="80,24 64,40 84,46" fill="#1E1B4B"/>
-          <polygon points="32,46 44,52 36,60" fill="#1E1B4B"/>
-          <polygon points="68,46 56,52 64,60" fill="#1E1B4B"/>
-          <polygon points="44,66 56,66 50,72" fill="#1E1B4B"/>
-        </svg>`
-      },
-      {
-        id: 'rabbit',
-        name: 'Розовый Кролик',
-        bg: 'linear-gradient(135deg, #EC4899 0%, #9D174D 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <polygon points="38,10 46,44 30,44" fill="#F472B6"/>
-          <polygon points="62,10 54,44 70,44" fill="#FB7185"/>
-          <polygon points="30,44 70,44 80,88 20,88" fill="#FDF2F8"/>
-          <polygon points="50,44 50,88 80,88" fill="#FCE7F3"/>
-          <polygon points="44,58 50,62 56,58" fill="#BE185D"/>
-        </svg>`
-      },
-      {
-        id: 'bird',
-        name: 'Птица Феникс',
-        bg: 'linear-gradient(135deg, #EAB308 0%, #854D0E 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
-          <polygon points="14,40 50,18 78,50 38,72" fill="#FDE047"/>
-          <polygon points="50,18 92,30 68,70" fill="#EAB308"/>
-          <polygon points="38,72 50,92 64,68" fill="#CA8A04"/>
-          <polygon points="14,40 2,52 26,56" fill="#FACC15"/>
-        </svg>`
-      }
-    ];
-
-    let currentAvatarIndex = 0;
-    let selectedAvatarId = localStorage.getItem('tutor_avatar_id') || 'dragon';
-
-    function initAvatars() {
-      const idx = AVATARS.findIndex(a => a.id === selectedAvatarId);
-      currentAvatarIndex = idx !== -1 ? idx : 0;
-      renderWheel();
-      updateTabBarAvatar();
-      setupWheelTouchSwipe();
-    }
-
-    // ========================================================
-    // РЕНДЕР И ВРАЩЕНИЕ 3D КОЛЕСА (ОТДАЛЕННАЯ СЦЕНА)
-    // ========================================================
-    const WHEEL_RADIUS = 260; // Увеличенный радиус для эффекта отдаления
-
-    function renderWheel() {
-      const wheel = document.getElementById('avatarWheel');
-      wheel.innerHTML = '';
-      const total = AVATARS.length;
-      const angleStep = 360 / total;
-
-      AVATARS.forEach((av, i) => {
-        const cell = document.createElement('div');
-        cell.className = 'wheel-item';
-        cell.id = `wheelCell_${i}`;
-        cell.style.background = av.bg;
-        cell.innerHTML = av.svg;
-
-        const phi = i * angleStep;
-        cell.style.transform = `rotateY(${phi}deg) translateZ(${WHEEL_RADIUS}px)`;
-
-        cell.onclick = () => {
-          haptic('light');
-          currentAvatarIndex = i;
-          applyWheelRotation();
-        };
-
-        wheel.appendChild(cell);
-      });
-
-      applyWheelRotation();
-    }
-
-    function applyWheelRotation() {
-      const total = AVATARS.length;
-      const angleStep = 360 / total;
-      const wheel = document.getElementById('avatarWheel');
-      const rotY = -currentAvatarIndex * angleStep;
-      
-      // Вращение орбиты с легким наклоном назад
-      wheel.style.transform = `rotateX(-10deg) rotateY(${rotY}deg)`;
-
-      // Подсветка центральной активной и затемнение фоновых
-      AVATARS.forEach((_, i) => {
-        const el = document.getElementById(`wheelCell_${i}`);
-        if (!el) return;
-        if (i === currentAvatarIndex) {
-          el.classList.add('is-selected');
-          el.classList.remove('is-dimmed');
-        } else {
-          el.classList.remove('is-selected');
-          el.classList.add('is-dimmed');
-        }
-      });
-
-      const cur = AVATARS[currentAvatarIndex];
-      document.getElementById('currentAvatarName').innerText = cur.name;
-    }
-
-    function rotateWheel(direction) {
-      haptic('light');
-      const total = AVATARS.length;
-      currentAvatarIndex = (currentAvatarIndex + direction + total) % total;
-      applyWheelRotation();
-    }
-
-    // Свайп жестами по экрану
-    function setupWheelTouchSwipe() {
-      const stage = document.getElementById('stageEl');
-      let startX = 0;
-      let isSwiping = false;
-
-      stage.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
-        isSwiping = true;
-      }, { passive: true });
-
-      stage.addEventListener('touchend', (e) => {
-        if (!isSwiping) return;
-        const diffX = e.changedTouches[0].clientX - startX;
-        if (Math.abs(diffX) > 40) {
-          if (diffX > 0) {
-            rotateWheel(-1); // свайп вправо -> вращение назад
-          } else {
-            rotateWheel(1);  // свайп влево -> вращение вперед
-          }
-        }
-        isSwiping = false;
-      }, { passive: true });
-    }
-
-    function confirmSelectedAvatar() {
-      const cur = AVATARS[currentAvatarIndex];
-      selectedAvatarId = cur.id;
-      localStorage.setItem('tutor_avatar_id', cur.id);
-      if (tg?.CloudStorage) tg.CloudStorage.setItem('tutor_avatar_id', cur.id);
-      haptic('success');
-      updateTabBarAvatar();
-      if (tg?.showAlert) tg.showAlert(`Талисман «${cur.name}» выбран!`);
-    }
-
-    function updateTabBarAvatar() {
-      const av = AVATARS.find(a => a.id === selectedAvatarId) || AVATARS[0];
-      const wrap = document.getElementById('tabBarAvatarWrapper');
-      wrap.style.background = av.bg;
-      wrap.innerHTML = av.svg;
-
-      const preview = document.getElementById('previewCurrentAvatar');
-      if (preview) {
-        preview.style.background = av.bg;
-        preview.innerHTML = av.svg;
-      }
-    }
-
-    // ==========================================
-    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-    // ==========================================
-    function switchTab(tab) {
-      haptic('light');
-      const jTab = document.getElementById('tabJournal');
-      const pTab = document.getElementById('tabProfile');
-      const btnJ = document.getElementById('tabBtnJournal');
-      const btnP = document.getElementById('tabBtnProfile');
-      const mic = document.getElementById('floatingVoiceWrap');
-
-      if (tab === 'journal') {
-        jTab.classList.remove('hidden');
-        pTab.classList.add('hidden');
-        btnJ.className = 'flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95';
-        btnP.className = 'flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95';
-        mic.classList.remove('hidden');
-      } else {
-        jTab.classList.add('hidden');
-        pTab.classList.remove('hidden');
-        btnJ.className = 'flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95';
-        btnP.className = 'flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95';
-        mic.classList.add('hidden');
-        applyWheelRotation();
-      }
-    }
-
-    // ==========================================
-    // ЛОГИКА УРОКОВ
-    // ==========================================
     let currentDate = new Date();
     let selectedDate = new Date();
     let lessons = [];
+    let repeatWeeksCount = 4;
 
     function haptic(type = 'light') {
       if (!tg?.HapticFeedback) return;
@@ -631,43 +322,39 @@
       }, 300);
     }
 
+    // БЕЗОПАСНЫЙ ЛОКАЛЬНЫЙ ФОРМАТ ДАТЫ (Без сдвига UTC)
+    const pad = (n) => String(n).padStart(2, '0');
+    const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v5');
+        const local = localStorage.getItem('tutor_lessons_v9');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v5', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v9', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
             render();
           }
         });
-        tg.CloudStorage.getItem('tutor_avatar_id', (err, val) => {
-          if (!err && val) {
-            selectedAvatarId = val;
-            initAvatars();
-          }
-        });
       } else {
         render();
       }
-      initAvatars();
     }
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v5', json);
+      localStorage.setItem('tutor_lessons_v9', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v5', json);
+        tg.CloudStorage.setItem('tutor_lessons_v9', json, (err) => {
+          if (err) console.warn("Cloud save warning:", err);
+        });
       }
       render();
     }
-
-    const pad = (n) => String(n).padStart(2, '0');
-    const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
     function renderDaysRow() {
       const year = currentDate.getFullYear();
@@ -730,10 +417,10 @@
       document.getElementById('monthTotal').innerText = `${mEarned.toLocaleString('ru-RU')} ₽`;
       document.getElementById('monthCompletedStat').innerText = `${mCompleted} из ${mLessons.length} проведено`;
 
-      const dayLessons = lessons.filter(l => l.date === selISO).sort((a,b) => a.time.localeCompare(b.time));
+      const dayLessons = lessons.filter(l => l.date === selISO).sort((a,b) => (a.time || '').localeCompare(b.time || ''));
       const dEarned = dayLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
       document.getElementById('dayTotal').innerText = `${dEarned.toLocaleString('ru-RU')} ₽`;
-      document.getElementById('dayLessonsStat').innerText = `${dayLessons.length} записей`;
+      document.getElementById('dayLessonsStat').innerText = `${dayLessons.length} занятий`;
 
       const todayISO = toISO(new Date());
       const dateBadge = document.getElementById('activeDateBadge');
@@ -768,7 +455,11 @@
           <div class="glass-card p-4 rounded-2xl space-y-3">
             <div class="flex items-start justify-between">
               <div>
-                <h4 class="text-base font-bold text-white tracking-tight">${l.student}</h4>
+                <!-- Клик по имени открывает карточку ученика -->
+                <button onclick="openStudentModal('${l.student.replace(/'/g, "\\'")}')" class="text-left group flex items-center gap-1.5">
+                  <h4 class="text-base font-bold text-white tracking-tight group-hover:text-indigo-400 transition">${l.student}</h4>
+                  <svg class="w-3.5 h-3.5 text-slate-500 opacity-60 group-hover:opacity-100 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
                 <div class="flex items-center gap-2 mt-1">
                   <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded flex items-center gap-1">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -807,6 +498,32 @@
       }).join('');
     }
 
+    // ==========================================
+    // ЛОГИКА ПОВТОРЯЮЩИХСЯ УРОКОВ
+    // ==========================================
+    function toggleRepeatOptions(show) {
+      const el = document.getElementById('repeatOptions');
+      if (show) {
+        el.classList.remove('hidden');
+        el.classList.add('grid');
+      } else {
+        el.classList.add('hidden');
+        el.classList.remove('grid');
+      }
+    }
+
+    function setRepeatWeeks(count) {
+      repeatWeeksCount = count;
+      document.querySelectorAll('.repeat-btn').forEach(btn => {
+        const w = Number(btn.getAttribute('data-weeks'));
+        if (w === count) {
+          btn.className = 'repeat-btn py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white';
+        } else {
+          btn.className = 'repeat-btn py-2 text-xs font-semibold rounded-xl bg-[#171B26] text-slate-400 border border-white/5';
+        }
+      });
+    }
+
     function openModalForCreate() {
       haptic('light');
       document.getElementById('editLessonId').value = '';
@@ -816,6 +533,9 @@
       document.getElementById('inStudent').value = '';
       document.getElementById('inPrice').value = '';
       document.getElementById('inNote').value = '';
+      document.getElementById('repeatSection').classList.remove('hidden');
+      document.getElementById('inRepeatToggle').checked = false;
+      toggleRepeatOptions(false);
       document.getElementById('modalBackdrop').classList.remove('hidden');
     }
 
@@ -831,6 +551,7 @@
       document.getElementById('inTime').value = item.time;
       document.getElementById('inPrice').value = item.price;
       document.getElementById('inNote').value = item.note || '';
+      document.getElementById('repeatSection').classList.add('hidden'); // Не дублируем при редактировании
 
       document.getElementById('modalBackdrop').classList.remove('hidden');
     }
@@ -847,6 +568,7 @@
       const time = document.getElementById('inTime').value;
       const price = document.getElementById('inPrice').value;
       const note = document.getElementById('inNote').value.trim();
+      const isRepeat = document.getElementById('inRepeatToggle').checked;
 
       if (!student || !date || !price || !time) {
         haptic('warning');
@@ -864,12 +586,22 @@
           item.note = note;
         }
       } else {
-        lessons.push({
-          id: 'ls_' + Date.now(),
-          student, date, time, note,
-          price: Number(price),
-          status: 'scheduled'
-        });
+        // Создание одиночного или серии повторяющихся
+        const [y, m, d] = date.split('-').map(Number);
+        const iterations = isRepeat ? repeatWeeksCount : 1;
+
+        for (let i = 0; i < iterations; i++) {
+          const targetDay = new Date(y, m - 1, d + 7 * i);
+          lessons.push({
+            id: 'ls_' + Date.now() + '_' + i,
+            student,
+            date: toISO(targetDay),
+            time,
+            price: Number(price),
+            status: 'scheduled',
+            note: note + (isRepeat ? ` (${i + 1}/${iterations})` : '')
+          });
+        }
       }
 
       haptic('success');
@@ -902,6 +634,100 @@
       }
     }
 
+    // ==========================================
+    // КАРТОЧКА УЧЕНИКА И СТАТИСТИКА
+    // ==========================================
+    function openStudentModal(name) {
+      haptic('light');
+      document.getElementById('studentModalName').innerText = name;
+      const sLessons = lessons.filter(l => l.student.toLowerCase() === name.toLowerCase())
+                              .sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+      const earned = sLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
+      const done = sLessons.filter(l => l.status === 'completed').length;
+      const canceled = sLessons.filter(l => l.status === 'canceled').length;
+
+      document.getElementById('studentStatEarned').innerText = `${earned.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('studentStatDone').innerText = done;
+      document.getElementById('studentStatCanceled').innerText = canceled;
+
+      const historyEl = document.getElementById('studentHistoryList');
+      if (sLessons.length === 0) {
+        historyEl.innerHTML = `<p class="text-xs text-slate-500 py-3 text-center">Занятий не найдено</p>`;
+      } else {
+        historyEl.innerHTML = sLessons.map(l => {
+          const isDone = l.status === 'completed';
+          const isCanceled = l.status === 'canceled';
+          const stColor = isDone ? 'text-emerald-400' : isCanceled ? 'text-rose-400' : 'text-amber-400';
+          const stText = isDone ? 'Проведён' : isCanceled ? 'Отменён' : 'План';
+
+          return `
+            <div class="flex items-center justify-between p-2.5 bg-[#171B26] rounded-xl border border-white/5 text-xs">
+              <div>
+                <span class="font-bold text-white">${l.date}</span>
+                <span class="text-slate-500 ml-1">в ${l.time}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-white">${Number(l.price).toLocaleString('ru-RU')} ₽</span>
+                <span class="${stColor} font-semibold">${stText}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('studentModalBackdrop').classList.remove('hidden');
+    }
+
+    function closeStudentModal() {
+      document.getElementById('studentModalBackdrop').classList.add('hidden');
+    }
+
+    // ==========================================
+    // ЭКСПОРТ В CSV / EXCEL (UTF-8 BOM)
+    // ==========================================
+    function exportMonthCSV() {
+      haptic('medium');
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const monthPrefix = `${year}-${pad(month + 1)}`;
+      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+      const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix))
+                              .sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+      if (mLessons.length === 0) {
+        if (tg?.showAlert) tg.showAlert(`В ${monthNames[month]} ${year} нет занятий для выгрузки.`);
+        return;
+      }
+
+      let csv = '\uFEFF'; // UTF-8 BOM для корректного открытия русских символов в Excel
+      csv += 'Дата;Время;Ученик;Статус;Стоимость (руб);Заметка\n';
+
+      let totalEarned = 0;
+      mLessons.forEach(l => {
+        const isDone = l.status === 'completed';
+        const stText = isDone ? 'Проведён' : (l.status === 'canceled' ? 'Отменён' : 'Запланирован');
+        if (isDone) totalEarned += Number(l.price) || 0;
+        const cleanNote = (l.note || '').replace(/[\n\r;]/g, ' ');
+        csv += `${l.date};${l.time};${l.student};${stText};${l.price};${cleanNote}\n`;
+      });
+
+      csv += `\nИТОГО ЗАРАБОТАНО ЗА МЕСЯЦ;;;;${totalEarned};\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Отчёт_Уроки_${monthPrefix}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (tg?.showAlert) tg.showAlert(`Отчёт за ${monthNames[month]} сформирован и скачан!`);
+    }
+
     document.getElementById('prevMonthBtn').onclick = () => {
       haptic('light');
       currentDate.setMonth(currentDate.getMonth() - 1);
@@ -913,9 +739,9 @@
       render();
     };
 
-    // ==========================================
+    // ====================================================
     // ГОЛОСОВОЙ ПОМОЩНИК
-    // ==========================================
+    // ====================================================
     let recognition = null;
     let isListening = false;
     let latestRecognizedText = '';
@@ -967,7 +793,7 @@
 
       if (isListening) {
         isListening = false;
-        recognition.stop();
+        try { recognition.stop(); } catch(e) {}
         document.getElementById('voiceBtn').classList.remove('mic-active');
 
         const cmd = latestRecognizedText.trim();
@@ -984,15 +810,15 @@
     }
 
     function extractDateFromText(txt) {
-      let targetDate = new Date(selectedDate);
+      let targetDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      const now = new Date();
+
       if (txt.includes('сегодня')) {
-        targetDate = new Date();
+        targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       } else if (txt.includes('вчера')) {
-        targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() - 1);
+        targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
       } else if (txt.includes('завтра')) {
-        targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() + 1);
+        targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
       } else {
         const numMatch = txt.match(/(\d{1,2})\s*(январ|феврал|март|апрел|ма|июн|июл|август|сентябр|октябр|ноябр|декабр)?/);
         if (numMatch) {
@@ -1014,12 +840,24 @@
       const targetISO = toISO(targetDate);
       const statusBanner = document.getElementById('voiceStatus');
 
-      // 1. УДАЛЕНИЕ
+      // 1. КОМАНДА: ЭКСПОРТ ОТЧЕТА
+      if (txt.includes('отчет') || txt.includes('отчёт') || txt.includes('выгруз') || txt.includes('скачай')) {
+        exportMonthCSV();
+        statusBanner.innerText = `Отчет сформирован ✓`;
+        setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+        return;
+      }
+
+      // 2. УДАЛЕНИЕ УРОКА
       if (txt.includes('удали') || txt.includes('удалить') || txt.includes('убери') || txt.includes('сотри')) {
-        let idx = lessons.findIndex(l => l.date === targetISO);
+        let idx = lessons.findIndex(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
+        if (idx === -1) {
+          idx = lessons.findIndex(l => l.date === targetISO);
+        }
         if (idx === -1) {
           idx = lessons.findIndex(l => txt.includes(l.student.toLowerCase()));
         }
+
         if (idx !== -1) {
           const deleted = lessons.splice(idx, 1)[0];
           saveData();
@@ -1034,20 +872,62 @@
         }
       }
 
-      // 2. СМЕНА СТАТУСА: ПРОЙДЕН
+      // 3. ДОБАВИТЬ / ПЕРЕИМЕНОВАТЬ УЧЕНИКА
+      if (txt.includes('имя') || txt.includes('назови') || txt.includes('переименуй') || txt.includes('ученика зовут')) {
+        let newName = '';
+        const pattern = /(?:имя(?:\s+у)?(?:\s+ученика)?(?:\s+на)?|назови(?:\s+ученика)?|переименуй(?:\s+в)?|ученика\s+зовут)\s+([А-Яа-яA-Za-z]+)/i;
+        const match = raw.match(pattern);
+
+        if (match && match[1]) {
+          newName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        } else {
+          const words = raw.split(/\s+/);
+          const candidate = words[words.length - 1].replace(/[.,!]/g, '');
+          if (candidate && candidate.length > 1) {
+            newName = candidate.charAt(0).toUpperCase() + candidate.slice(1);
+          }
+        }
+
+        if (newName) {
+          let targetLesson = lessons.find(l => l.date === targetISO) || 
+                             lessons.find(l => l.date === toISO(selectedDate)) ||
+                             lessons.find(l => l.student.toLowerCase().includes('ученик'));
+
+          if (targetLesson) {
+            targetLesson.student = newName;
+            selectedDate = new Date(targetLesson.date.replace(/-/g, '/'));
+            currentDate = new Date(selectedDate);
+            saveData();
+            haptic('success');
+            statusBanner.innerText = `Имя обновлено: ${newName} ✓`;
+            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+            return;
+          } else {
+            statusBanner.innerText = `Не нашел урок для смены имени`;
+            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+            return;
+          }
+        }
+      }
+
+      // 4. СМЕНА СТАТУСА: ПРОЙДЕН
       const successKeywords = [
         'проведен', 'проведён', 'состоялся', 'был урок', 'прошел', 'прошёл',
         'успешно', 'отзанимались', 'провели', 'закончили', 'оплатил',
         'занимались', 'сделали', 'отвели', 'всё ок', 'все ок'
       ];
       if (successKeywords.some(w => txt.includes(w))) {
-        let found = lessons.find(l => l.date === targetISO);
+        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
+        if (!found) {
+          found = lessons.find(l => l.date === targetISO);
+        }
         if (!found) {
           found = lessons.find(l => txt.includes(l.student.toLowerCase()));
         }
+
         if (found) {
           found.status = 'completed';
-          selectedDate = new Date(found.date + 'T00:00:00');
+          selectedDate = new Date(found.date.replace(/-/g, '/'));
           currentDate = new Date(selectedDate);
           saveData();
           haptic('success');
@@ -1057,19 +937,23 @@
         }
       }
 
-      // 3. СМЕНА СТАТУСА: ОТМЕНЁН
+      // 5. СМЕНА СТАТУСА: ОТМЕНЁН
       const cancelKeywords = [
         'отменен', 'отменён', 'не состоялся', 'не был', 'сорвался',
         'заболел', 'перенесли', 'отменили', 'пропустил', 'не пришел'
       ];
       if (cancelKeywords.some(w => txt.includes(w))) {
-        let found = lessons.find(l => l.date === targetISO);
+        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
+        if (!found) {
+          found = lessons.find(l => l.date === targetISO);
+        }
         if (!found) {
           found = lessons.find(l => txt.includes(l.student.toLowerCase()));
         }
+
         if (found) {
           found.status = 'canceled';
-          selectedDate = new Date(found.date + 'T00:00:00');
+          selectedDate = new Date(found.date.replace(/-/g, '/'));
           currentDate = new Date(selectedDate);
           saveData();
           haptic('warning');
@@ -1079,24 +963,27 @@
         }
       }
 
-      // 4. ДОБАВЛЕНИЕ
+      // 6. ДОБАВЛЕНИЕ НОВОГО УРОКА
       if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь') || txt.includes('урок')) {
         let time = '14:00';
+        let remainingTxt = txt;
+
         const timeMatch = txt.match(/(?:в\s*)?(\d{1,2})(?::(\d{2})|\s+(\d{2}))?/);
         if (timeMatch && parseInt(timeMatch[1]) < 24) {
           const hh = pad(timeMatch[1]);
           const mm = timeMatch[2] || timeMatch[3] || '00';
           time = `${hh}:${mm}`;
+          remainingTxt = remainingTxt.replace(timeMatch[0], ' ');
         }
 
         let price = 2000;
-        const priceMatch = txt.match(/(\d{3,6})\s*(?:руб|р|₽)?/);
+        const priceMatch = remainingTxt.match(/(\d{3,6})\s*(?:руб|р|₽)?/);
         if (priceMatch) {
           price = Number(priceMatch[1]);
         }
 
         let student = 'Новый ученик';
-        const nameMatch = txt.match(/(?:с|ученик|для)\s+([А-Яа-яA-Za-z]+)/);
+        const nameMatch = raw.match(/(?:с|ученик|для)\s+([А-Яа-яA-Za-z]+)/);
         if (nameMatch) {
           student = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
         }
