@@ -38,7 +38,6 @@
       background: radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
     }
 
-    /* Защита от белого фона инпутов на iOS */
     input, textarea, select {
       background-color: #171B26 !important;
       color: #FFFFFF !important;
@@ -82,120 +81,282 @@
     .modal-enter {
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    /* 3D Wheel Carousel для аватарок */
+    .wheel-scene {
+      perspective: 1000px;
+      width: 100%;
+      height: 230px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wheel-carousel {
+      width: 130px;
+      height: 130px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .wheel-cell {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      left: 5px;
+      top: 5px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+      border: 3px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Нижний стеклянный TabBar */
+    .tabbar-blur {
+      background: rgba(15, 18, 26, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
   </style>
 </head>
-<body class="p-4 pb-28 select-none">
+<body class="p-4 pb-32 select-none">
 
-  <!-- ШАПКА И НАВИГАЦИЯ ПО МЕСЯЦАМ -->
-  <header class="flex items-center justify-between mb-4 pt-1">
-    <div>
-      <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
-      <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
-    </div>
-    <div class="flex gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
-      <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <button id="nextMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-      </button>
-    </div>
-  </header>
+  <!-- ============================================== -->
+  <!-- ВКЛАДКА 1: ОСНОВНОЙ ЖУРНАЛ И ДОХОД             -->
+  <!-- ============================================== -->
+  <main id="tabJournal" class="space-y-5">
+    <!-- ШАПКА -->
+    <header class="flex items-center justify-between pt-1">
+      <div>
+        <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
+        <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
+      </div>
+      <div class="flex gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
+        <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button id="nextMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </header>
 
-  <!-- СТАТИСТИКА ДОХОДА -->
-  <section class="grid grid-cols-2 gap-3 mb-5">
-    <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
-      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
-      <p id="monthTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
-      <div class="flex items-center gap-1.5 mt-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-        <span id="monthCompletedStat" class="text-[11px] text-slate-400 font-medium">0 уроков</span>
+    <!-- КАРТОЧКИ ДОХОДА -->
+    <section class="grid grid-cols-2 gap-3">
+      <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
+        <p id="monthTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+        <div class="flex items-center gap-1.5 mt-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span id="monthCompletedStat" class="text-[11px] text-slate-400 font-medium">0 уроков</span>
+        </div>
+      </div>
+
+      <div class="glass-card glow-purple p-4 rounded-2xl relative overflow-hidden">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Выбранный день</span>
+        <p id="dayTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+        <div class="flex items-center gap-1.5 mt-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+          <span id="dayLessonsStat" class="text-[11px] text-slate-400 font-medium">0 занятий</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ГОРИЗОНТАЛЬНЫЙ КАЛЕНДАРЬ -->
+    <section>
+      <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none"></div>
+    </section>
+
+    <!-- СПИСОК УРОКОВ -->
+    <section>
+      <div class="flex items-center justify-between mb-3 px-1">
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Занятия</h2>
+          <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
+        </div>
+        <button onclick="openModalForCreate()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
+          <!-- Iconimate Plus -->
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Новый урок
+        </button>
+      </div>
+
+      <div id="lessonsList" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <!-- ============================================== -->
+  <!-- ВКЛАДКА 2: ВЫБОР АВАТАРОК (КОЛЕСО ORI-GAMI)   -->
+  <!-- ============================================== -->
+  <main id="tabProfile" class="hidden space-y-6 pt-2">
+    <header class="text-center">
+      <span class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">Персонализация</span>
+      <h2 class="text-2xl font-bold text-white mt-1">Оригами-Аватар</h2>
+      <p class="text-xs text-slate-400 mt-1">Вращайте колесо и выберите ваш талисман</p>
+    </header>
+
+    <!-- 3D КОЛЕСО -->
+    <div class="glass-card p-6 rounded-3xl border border-white/10 flex flex-col items-center relative overflow-hidden">
+      <div class="wheel-scene my-2">
+        <div id="avatarWheel" class="wheel-carousel">
+          <!-- Карточки аватарок заполняются JS -->
+        </div>
+      </div>
+
+      <!-- Кнопки управления вращением -->
+      <div class="flex items-center gap-4 mt-4">
+        <button onclick="rotateWheel(-1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button onclick="confirmSelectedAvatar()" class="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs tracking-wider uppercase shadow-lg shadow-indigo-600/30 active:scale-95 transition">
+          Выбрать этот
+        </button>
+        <button onclick="rotateWheel(1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <p id="currentAvatarName" class="text-sm font-bold text-indigo-300 mt-4 tracking-wide">Лазурный Дракон</p>
+    </div>
+
+    <!-- Инфо-карточка -->
+    <div class="glass-card p-4 rounded-2xl flex items-center gap-3.5">
+      <div id="previewCurrentAvatar" class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-white/20"></div>
+      <div>
+        <h4 class="text-sm font-bold text-white">Текущий аватар сохранён</h4>
+        <p class="text-xs text-slate-400 mt-0.5">Отображается в панели таб-бара и профиле</p>
       </div>
     </div>
+  </main>
 
-    <div class="glass-card glow-purple p-4 rounded-2xl relative overflow-hidden">
-      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Выбранный день</span>
-      <p id="dayTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
-      <div class="flex items-center gap-1.5 mt-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-        <span id="dayLessonsStat" class="text-[11px] text-slate-400 font-medium">0 занятий</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ГОРИЗОНТАЛЬНЫЙ КАЛЕНДАРЬ -->
-  <section class="mb-6">
-    <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none"></div>
-  </section>
-
-  <!-- СПИСОК УРОКОВ -->
-  <section>
-    <div class="flex items-center justify-between mb-3 px-1">
-      <div class="flex items-center gap-2">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Занятия</h2>
-        <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
-      </div>
-      <button onclick="openModal()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-        Новый урок
-      </button>
-    </div>
-
-    <div id="lessonsList" class="space-y-3"></div>
-  </section>
-
-  <!-- ПЛАВАЮЩИЙ МИКРОФОН -->
-  <div class="fixed bottom-6 right-6 flex flex-col items-end z-40">
+  <!-- ============================================== -->
+  <!-- ПЛАВАЮЩИЙ МИКРОФОН (Ассистент)                 -->
+  <!-- ============================================== -->
+  <div id="floatingVoiceWrap" class="fixed bottom-24 right-5 flex flex-col items-end z-40">
     <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-2xl max-w-[280px] break-words">
       Слушаю...
     </div>
     
     <button id="voiceBtn" onclick="toggleVoice()" class="w-14 h-14 rounded-2xl bg-[#1A1F2C] border border-white/10 flex items-center justify-center text-white shadow-2xl active:scale-90 transition">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+      <!-- Iconimate Mic -->
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+        <line x1="12" x2="12" y1="19" y2="22"></line>
       </svg>
     </button>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ (С ЗАЩИТОЙ ОТ КЛАВИАТУРЫ) -->
+  <!-- ============================================== -->
+  <!-- TAB BAR (Iconimate Icons + Live Avatar Tab)   -->
+  <!-- ============================================== -->
+  <nav class="fixed bottom-0 left-0 right-0 h-20 tabbar-blur flex items-center justify-around px-6 z-40">
+    <!-- Вкладка Журнал -->
+    <button id="tabBtnJournal" onclick="switchTab('journal')" class="flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95">
+      <div class="p-1 rounded-xl">
+        <!-- Iconimate Calendar/Grid SVG -->
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <circle cx="8" cy="14" r="1" fill="currentColor"></circle>
+          <circle cx="12" cy="14" r="1" fill="currentColor"></circle>
+          <circle cx="16" cy="14" r="1" fill="currentColor"></circle>
+        </svg>
+      </div>
+      <span class="text-[10px] font-bold tracking-wider uppercase">Журнал</span>
+    </button>
+
+    <!-- Вкладка Аватарка (Колесо) -->
+    <button id="tabBtnProfile" onclick="switchTab('profile')" class="flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95">
+      <div id="tabBarAvatarWrapper" class="w-7 h-7 rounded-full overflow-hidden border border-white/20 transition-transform">
+        <!-- Сюда динамически рендерится выбранная SVG-аватарка -->
+      </div>
+      <span class="text-[10px] font-bold tracking-wider uppercase">Аватар</span>
+    </button>
+  </nav>
+
+  <!-- ============================================== -->
+  <!-- МОДАЛЬНОЕ ОКНО (Создание и Редактирование)     -->
+  <!-- ============================================== -->
   <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeModal()">
     <div class="min-h-full flex items-end sm:items-center justify-center">
       <div id="modalContainer" class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[24px] p-6 space-y-4 pb-48 sm:pb-6">
         <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-1 sm:hidden"></div>
         
         <div class="flex items-center justify-between pb-1">
-          <h3 class="text-lg font-bold text-white tracking-tight">Добавить занятие</h3>
+          <h3 id="modalHeading" class="text-lg font-bold text-white tracking-tight">Добавить занятие</h3>
           <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
         </div>
 
+        <input type="hidden" id="editLessonId" value="">
+
+        <!-- Поле: Ученик -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ученик и предмет</label>
-          <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <!-- Iconimate User -->
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full pl-10 pr-3.5 py-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          </div>
         </div>
 
+        <!-- Поля: Дата и Время с иконками Iconimate -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Дата</label>
-            <input id="inDate" type="date" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-400">
+                <!-- Iconimate Calendar Day Icon -->
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </span>
+              <input id="inDate" type="date" class="w-full pl-10 pr-3.5 py-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+            </div>
           </div>
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Время</label>
-            <input id="inTime" type="time" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-400">
+                <!-- Iconimate Clock Icon -->
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </span>
+              <input id="inTime" type="time" class="w-full pl-10 pr-3.5 py-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+            </div>
           </div>
         </div>
 
+        <!-- Поле: Стоимость -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Стоимость (₽)</label>
-          <input id="inPrice" type="number" placeholder="2500" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-400 font-bold text-sm">₽</span>
+            <input id="inPrice" type="number" placeholder="2500" class="w-full pl-10 pr-3.5 py-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          </div>
         </div>
 
+        <!-- Поле: Заметка -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
           <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none" onfocus="handleInputFocus(this)"></textarea>
         </div>
 
         <button onclick="saveLesson()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition">
-          Сохранить запись
+          Сохранить занятие
         </button>
       </div>
     </div>
@@ -211,6 +372,157 @@
       if (tg.setBackgroundColor) tg.setBackgroundColor('#0B0D13');
     }
 
+    // ==========================================
+    // АВАТАРКИ: Оригами-талисманы (SVG)
+    // ==========================================
+    const AVATARS = [
+      {
+        id: 'dragon',
+        name: 'Лазурный Дракончик',
+        bg: 'linear-gradient(135deg, #10B981 0%, #064E3B 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><path d="M50 15 L70 35 L58 45 L78 60 L50 85 L35 60 L46 45 L30 35 Z" fill="#34D399"/><path d="M50 15 L58 45 L50 85 Z" fill="#059669"/><polygon points="70,35 88,38 78,60" fill="#6EE7B7"/><polygon points="30,35 12,38 35,60" fill="#047857"/></svg>`
+      },
+      {
+        id: 'fox',
+        name: 'Огненная Лисица',
+        bg: 'linear-gradient(135deg, #F97316 0%, #7C2D12 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="50,22 68,48 50,78 32,48" fill="#FB923C"/><polygon points="50,22 68,48 50,78" fill="#EA580C"/><polygon points="32,48 18,26 36,36" fill="#FDBA74"/><polygon points="68,48 82,26 64,36" fill="#C2410C"/><polygon points="44,78 50,86 56,78" fill="#FFFFFF"/></svg>`
+      },
+      {
+        id: 'cat',
+        name: 'Сиамский Кот',
+        bg: 'linear-gradient(135deg, #38BDF8 0%, #0369A1 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="30,25 45,40 25,55" fill="#0F172A"/><polygon points="70,25 55,40 75,55" fill="#1E293B"/><polygon points="45,40 55,40 65,70 35,70" fill="#E2E8F0"/><polygon points="50,40 50,70 35,70" fill="#CBD5E1"/><polygon points="44,52 50,56 56,52" fill="#0284C7"/></svg>`
+      },
+      {
+        id: 'panda',
+        name: 'Бамбуковая Панда',
+        bg: 'linear-gradient(135deg, #A855F7 0%, #581C87 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><circle cx="50" cy="52" r="30" fill="#F8FAFC"/><polygon points="26,30 36,44 22,46" fill="#1E1B4B"/><polygon points="74,30 64,44 78,46" fill="#1E1B4B"/><polygon points="36,48 44,52 38,58" fill="#1E1B4B"/><polygon points="64,48 56,52 62,58" fill="#1E1B4B"/><polygon points="46,62 54,62 50,67" fill="#1E1B4B"/></svg>`
+      },
+      {
+        id: 'rabbit',
+        name: 'Розовый Кролик',
+        bg: 'linear-gradient(135deg, #EC4899 0%, #831843 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="42,16 48,46 36,46" fill="#F472B6"/><polygon points="58,16 52,46 64,46" fill="#FB7185"/><polygon points="36,46 64,46 72,78 28,78" fill="#FDF2F8"/><polygon points="50,46 50,78 72,78" fill="#FCE7F3"/></svg>`
+      },
+      {
+        id: 'bird',
+        name: 'Птица Феникс',
+        bg: 'linear-gradient(135deg, #EAB308 0%, #713F12 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="20,40 50,25 70,50 40,65" fill="#FDE047"/><polygon points="50,25 85,35 60,65" fill="#EAB308"/><polygon points="40,65 50,85 58,65" fill="#CA8A04"/></svg>`
+      }
+    ];
+
+    let currentAvatarIndex = 0;
+    let selectedAvatarId = localStorage.getItem('tutor_avatar_id') || 'dragon';
+
+    function initAvatars() {
+      const idx = AVATARS.findIndex(a => a.id === selectedAvatarId);
+      currentAvatarIndex = idx !== -1 ? idx : 0;
+      renderWheel();
+      updateTabBarAvatar();
+    }
+
+    function renderWheel() {
+      const wheel = document.getElementById('avatarWheel');
+      wheel.innerHTML = '';
+      const total = AVATARS.length;
+      const angleStep = 360 / total;
+      const radius = 135;
+
+      AVATARS.forEach((av, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'wheel-cell';
+        cell.style.background = av.bg;
+        cell.innerHTML = av.svg;
+
+        const phi = i * angleStep;
+        cell.style.transform = `rotateY(${phi}deg) translateZ(${radius}px)`;
+
+        cell.onclick = () => {
+          haptic('light');
+          currentAvatarIndex = i;
+          applyWheelRotation();
+        };
+
+        wheel.appendChild(cell);
+      });
+
+      applyWheelRotation();
+    }
+
+    function applyWheelRotation() {
+      const total = AVATARS.length;
+      const angleStep = 360 / total;
+      const wheel = document.getElementById('avatarWheel');
+      const rotY = -currentAvatarIndex * angleStep;
+      wheel.style.transform = `rotateY(${rotY}deg)`;
+
+      const cur = AVATARS[currentAvatarIndex];
+      document.getElementById('currentAvatarName').innerText = cur.name;
+    }
+
+    function rotateWheel(direction) {
+      haptic('light');
+      const total = AVATARS.length;
+      currentAvatarIndex = (currentAvatarIndex + direction + total) % total;
+      applyWheelRotation();
+    }
+
+    function confirmSelectedAvatar() {
+      const cur = AVATARS[currentAvatarIndex];
+      selectedAvatarId = cur.id;
+      localStorage.setItem('tutor_avatar_id', cur.id);
+      if (tg?.CloudStorage) tg.CloudStorage.setItem('tutor_avatar_id', cur.id);
+      haptic('success');
+      updateTabBarAvatar();
+      if (tg?.showAlert) tg.showAlert(`Талисман «${cur.name}» установлен!`);
+    }
+
+    function updateTabBarAvatar() {
+      const av = AVATARS.find(a => a.id === selectedAvatarId) || AVATARS[0];
+      const wrap = document.getElementById('tabBarAvatarWrapper');
+      wrap.style.background = av.bg;
+      wrap.innerHTML = av.svg;
+
+      const preview = document.getElementById('previewCurrentAvatar');
+      if (preview) {
+        preview.style.background = av.bg;
+        preview.innerHTML = av.svg;
+      }
+    }
+
+    // ==========================================
+    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК TAB BAR
+    // ==========================================
+    function switchTab(tab) {
+      haptic('light');
+      const jTab = document.getElementById('tabJournal');
+      const pTab = document.getElementById('tabProfile');
+      const btnJ = document.getElementById('tabBtnJournal');
+      const btnP = document.getElementById('tabBtnProfile');
+      const mic = document.getElementById('floatingVoiceWrap');
+
+      if (tab === 'journal') {
+        jTab.classList.remove('hidden');
+        pTab.classList.add('hidden');
+        btnJ.className = 'flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95';
+        btnP.className = 'flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95';
+        mic.classList.remove('hidden');
+      } else {
+        jTab.classList.add('hidden');
+        pTab.classList.remove('hidden');
+        btnJ.className = 'flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95';
+        btnP.className = 'flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95';
+        mic.classList.add('hidden');
+        applyWheelRotation();
+      }
+    }
+
+    // ==========================================
+    // ОСНОВНАЯ ЛОГИКА УРОКОВ
+    // ==========================================
     let currentDate = new Date();
     let selectedDate = new Date();
     let lessons = [];
@@ -223,7 +535,6 @@
       if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
     }
 
-    // Автоподскролл поля при фокусе клавиатуры
     function handleInputFocus(elem) {
       setTimeout(() => {
         elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -232,28 +543,35 @@
 
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v4');
+        const local = localStorage.getItem('tutor_lessons_v5');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v4', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v5', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
             render();
           }
         });
+        tg.CloudStorage.getItem('tutor_avatar_id', (err, val) => {
+          if (!err && val) {
+            selectedAvatarId = val;
+            initAvatars();
+          }
+        });
       } else {
         render();
       }
+      initAvatars();
     }
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v4', json);
+      localStorage.setItem('tutor_lessons_v5', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v4', json);
+        tg.CloudStorage.setItem('tutor_lessons_v5', json);
       }
       render();
     }
@@ -362,7 +680,11 @@
               <div>
                 <h4 class="text-base font-bold text-white tracking-tight">${l.student}</h4>
                 <div class="flex items-center gap-2 mt-1">
-                  <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">${l.time}</span>
+                  <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                    <!-- Iconimate Clock Mini -->
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    ${l.time}
+                  </span>
                   <span class="text-sm font-extrabold text-white">${Number(l.price).toLocaleString('ru-RU')} ₽</span>
                 </div>
               </div>
@@ -374,9 +696,22 @@
             ${l.note ? `<p class="text-xs text-slate-400 bg-white/[0.03] p-2.5 rounded-xl border border-white/5 leading-relaxed">${l.note}</p>` : ''}
 
             <div class="flex items-center justify-between pt-2 border-t border-white/5">
-              <button onclick="toggleStatus('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 active:scale-95 transition">
-                Сменить статус
-              </button>
+              <div class="flex items-center gap-2">
+                <button onclick="toggleStatus('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 active:scale-95 transition">
+                  Статус
+                </button>
+                <!-- КНОПКА РЕДАКТИРОВАНИЯ С ИКОНКОЙ ICONIMATE -->
+                <button onclick="openModalForEdit('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 active:scale-95 transition flex items-center gap-1">
+                  <!-- Iconimate Edit Pencil -->
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                    <path d="m15 5 4 4"></path>
+                  </svg>
+                  Изменить
+                </button>
+              </div>
+
+              <!-- КНОПКА УДАЛЕНИЯ -->
               <button onclick="deleteLesson('${l.id}')" class="p-2 text-rose-400 hover:text-rose-300 active:scale-90">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
@@ -386,21 +721,44 @@
       }).join('');
     }
 
-    function openModal() {
+    // ==========================================
+    // МОДАЛКА: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ
+    // ==========================================
+    function openModalForCreate() {
       haptic('light');
+      document.getElementById('editLessonId').value = '';
+      document.getElementById('modalHeading').innerText = 'Добавить занятие';
       document.getElementById('inDate').value = toISO(selectedDate);
       document.getElementById('inTime').value = '14:00';
+      document.getElementById('inStudent').value = '';
+      document.getElementById('inPrice').value = '';
+      document.getElementById('inNote').value = '';
+      document.getElementById('modalBackdrop').classList.remove('hidden');
+    }
+
+    function openModalForEdit(id) {
+      haptic('light');
+      const item = lessons.find(l => l.id === id);
+      if (!item) return;
+
+      document.getElementById('editLessonId').value = item.id;
+      document.getElementById('modalHeading').innerText = 'Редактировать занятие';
+      document.getElementById('inStudent').value = item.student;
+      document.getElementById('inDate').value = item.date;
+      document.getElementById('inTime').value = item.time;
+      document.getElementById('inPrice').value = item.price;
+      document.getElementById('inNote').value = item.note || '';
+
       document.getElementById('modalBackdrop').classList.remove('hidden');
     }
 
     function closeModal() {
       document.getElementById('modalBackdrop').classList.add('hidden');
-      document.getElementById('inStudent').value = '';
-      document.getElementById('inPrice').value = '';
-      document.getElementById('inNote').value = '';
+      document.getElementById('editLessonId').value = '';
     }
 
     function saveLesson() {
+      const editId = document.getElementById('editLessonId').value;
       const student = document.getElementById('inStudent').value.trim();
       const date = document.getElementById('inDate').value;
       const time = document.getElementById('inTime').value;
@@ -413,12 +771,25 @@
         return;
       }
 
-      lessons.push({
-        id: 'ls_' + Date.now(),
-        student, date, time, note,
-        price: Number(price),
-        status: 'scheduled'
-      });
+      if (editId) {
+        // Режим обновления существующего урока
+        const item = lessons.find(l => l.id === editId);
+        if (item) {
+          item.student = student;
+          item.date = date;
+          item.time = time;
+          item.price = Number(price);
+          item.note = note;
+        }
+      } else {
+        // Режим создания нового
+        lessons.push({
+          id: 'ls_' + Date.now(),
+          student, date, time, note,
+          price: Number(price),
+          status: 'scheduled'
+        });
+      }
 
       haptic('success');
       saveData();
@@ -462,7 +833,7 @@
     };
 
     // ==========================================
-    // ГОЛОСОВОЙ ПОМОЩНИК С РАСШИРЕННЫМ РАСПОЗНАВАНИЕМ
+    // ГОЛОСОВОЙ ПОМОЩНИК
     // ==========================================
     let recognition = null;
     let isListening = false;
@@ -562,10 +933,9 @@
       const targetISO = toISO(targetDate);
       const statusBanner = document.getElementById('voiceStatus');
 
-      // 1. УДАЛЕНИЕ ("удали", "убери", "стереть")
+      // 1. УДАЛЕНИЕ
       if (txt.includes('удали') || txt.includes('удалить') || txt.includes('убери') || txt.includes('сотри')) {
         let idx = lessons.findIndex(l => l.date === targetISO);
-        // Если по дате не нашли, пробуем найти по имени
         if (idx === -1) {
           idx = lessons.findIndex(l => txt.includes(l.student.toLowerCase()));
         }
@@ -577,13 +947,13 @@
           setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         } else {
-          statusBanner.innerText = `Урок на эту дату не найден`;
+          statusBanner.innerText = `Урок не найден`;
           setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         }
       }
 
-      // 2. СМЕНА СТАТУСА: ПРОЙДЕН / СОСТОЯЛСЯ (богатый словарь синонимов)
+      // 2. СМЕНА СТАТУСА: ПРОЙДЕН
       const successKeywords = [
         'проведен', 'проведён', 'состоялся', 'был урок', 'прошел', 'прошёл',
         'успешно', 'отзанимались', 'провели', 'закончили', 'оплатил',
@@ -606,7 +976,7 @@
         }
       }
 
-      // 3. СМЕНА СТАТУСА: ОТМЕНЁН / НЕ БЫЛО
+      // 3. СМЕНА СТАТУСА: ОТМЕНЁН
       const cancelKeywords = [
         'отменен', 'отменён', 'не состоялся', 'не был', 'сорвался',
         'заболел', 'перенесли', 'отменили', 'пропустил', 'не пришел'
@@ -628,24 +998,7 @@
         }
       }
 
-      // 4. ИЗМЕНЕНИЕ ИМЕНИ
-      if (txt.includes('имя') || txt.includes('назови') || txt.includes('переименуй')) {
-        const nameMatch = txt.match(/(?:на|ученика|имя)\s+([А-Яа-яA-Za-z]+)/);
-        if (nameMatch) {
-          const newName = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
-          let targetLesson = lessons.find(l => l.date === targetISO) || lessons.find(l => l.date === toISO(selectedDate));
-          if (targetLesson) {
-            targetLesson.student = newName;
-            saveData();
-            haptic('success');
-            statusBanner.innerText = `Имя изменено на: ${newName}`;
-            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
-            return;
-          }
-        }
-      }
-
-      // 5. СОЗДАНИЕ УРОКА ("добавить", "запиши", "новый урок")
+      // 4. ДОБАВЛЕНИЕ
       if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь') || txt.includes('урок')) {
         let time = '14:00';
         const timeMatch = txt.match(/(?:в\s*)?(\d{1,2})(?::(\d{2})|\s+(\d{2}))?/);
