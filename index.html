@@ -38,10 +38,11 @@
       background: radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
     }
 
+    /* Защита от белого фона инпутов на iOS */
     input, textarea, select {
       background-color: #171B26 !important;
       color: #FFFFFF !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -64,12 +65,12 @@
     }
 
     @keyframes pulse-ring {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7); }
-      70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(147, 51, 234, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); }
+      0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7); }
+      70% { transform: scale(1.04); box-shadow: 0 0 0 18px rgba(147, 51, 234, 0); }
+      100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); }
     }
     .mic-active {
-      animation: pulse-ring 1.4s infinite;
+      animation: pulse-ring 1.3s infinite;
       background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%) !important;
       border-color: #F43F5E !important;
     }
@@ -79,13 +80,13 @@
       to { transform: translateY(0); opacity: 1; }
     }
     .modal-enter {
-      animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
   </style>
 </head>
 <body class="p-4 pb-28 select-none">
 
-  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <!-- ШАПКА И НАВИГАЦИЯ ПО МЕСЯЦАМ -->
   <header class="flex items-center justify-between mb-4 pt-1">
     <div>
       <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
@@ -101,7 +102,7 @@
     </div>
   </header>
 
-  <!-- КАРТОЧКИ ДОХОДА -->
+  <!-- СТАТИСТИКА ДОХОДА -->
   <section class="grid grid-cols-2 gap-3 mb-5">
     <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
       <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
@@ -143,9 +144,9 @@
     <div id="lessonsList" class="space-y-3"></div>
   </section>
 
-  <!-- ПЛАВАЮЩИЙ ГОЛОСОВОЙ АССИСТЕНТ -->
+  <!-- ПЛАВАЮЩИЙ МИКРОФОН -->
   <div class="fixed bottom-6 right-6 flex flex-col items-end z-40">
-    <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-lg shadow-black/50 max-w-[260px] truncate">
+    <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-2xl max-w-[280px] break-words">
       Слушаю...
     </div>
     
@@ -156,45 +157,47 @@
     </button>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО -->
-  <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-end justify-center z-50 p-0" onclick="if(event.target === this) closeModal()">
-    <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t border-white/10 rounded-t-[30px] p-6 space-y-4 max-h-[92vh] overflow-y-auto">
-      <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-2"></div>
-      
-      <div class="flex items-center justify-between pb-1">
-        <h3 class="text-lg font-bold text-white tracking-tight">Добавить занятие</h3>
-        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
-      </div>
-
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ученик и предмет</label>
-        <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full p-3.5 rounded-xl text-sm font-medium">
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Дата</label>
-          <input id="inDate" type="date" class="w-full p-3.5 rounded-xl text-sm font-medium">
+  <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ (С ЗАЩИТОЙ ОТ КЛАВИАТУРЫ) -->
+  <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeModal()">
+    <div class="min-h-full flex items-end sm:items-center justify-center">
+      <div id="modalContainer" class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[24px] p-6 space-y-4 pb-48 sm:pb-6">
+        <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-1 sm:hidden"></div>
+        
+        <div class="flex items-center justify-between pb-1">
+          <h3 class="text-lg font-bold text-white tracking-tight">Добавить занятие</h3>
+          <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
         </div>
+
         <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Время</label>
-          <input id="inTime" type="time" class="w-full p-3.5 rounded-xl text-sm font-medium">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ученик и предмет</label>
+          <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
         </div>
-      </div>
 
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Стоимость (₽)</label>
-        <input id="inPrice" type="number" placeholder="2500" class="w-full p-3.5 rounded-xl text-sm font-medium">
-      </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Дата</label>
+            <input id="inDate" type="date" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Время</label>
+            <input id="inTime" type="time" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+          </div>
+        </div>
 
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
-        <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка на звонок..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none"></textarea>
-      </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Стоимость (₽)</label>
+          <input id="inPrice" type="number" placeholder="2500" class="w-full p-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
+        </div>
 
-      <button onclick="saveLesson()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition">
-        Сохранить запись
-      </button>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
+          <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none" onfocus="handleInputFocus(this)"></textarea>
+        </div>
+
+        <button onclick="saveLesson()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition">
+          Сохранить запись
+        </button>
+      </div>
     </div>
   </div>
 
@@ -220,14 +223,21 @@
       if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
     }
 
+    // Автоподскролл поля при фокусе клавиатуры
+    function handleInputFocus(elem) {
+      setTimeout(() => {
+        elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v3');
+        const local = localStorage.getItem('tutor_lessons_v4');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v3', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v4', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
@@ -241,9 +251,9 @@
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v3', json);
+      localStorage.setItem('tutor_lessons_v4', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v3', json);
+        tg.CloudStorage.setItem('tutor_lessons_v4', json);
       }
       render();
     }
@@ -331,7 +341,7 @@
         listEl.innerHTML = `
           <div class="glass-card p-8 rounded-2xl text-center border-dashed border-white/10">
             <p class="text-sm font-semibold text-slate-400">На этот день уроков нет</p>
-            <p class="text-xs text-slate-600 mt-1">Нажмите «+ Новый урок» или используйте микрофон</p>
+            <p class="text-xs text-slate-600 mt-1">Нажмите «+ Новый урок» или надиктуйте микрофоном</p>
           </div>
         `;
         return;
@@ -381,12 +391,10 @@
       document.getElementById('inDate').value = toISO(selectedDate);
       document.getElementById('inTime').value = '14:00';
       document.getElementById('modalBackdrop').classList.remove('hidden');
-      document.getElementById('modalBackdrop').classList.add('flex');
     }
 
     function closeModal() {
       document.getElementById('modalBackdrop').classList.add('hidden');
-      document.getElementById('modalBackdrop').classList.remove('flex');
       document.getElementById('inStudent').value = '';
       document.getElementById('inPrice').value = '';
       document.getElementById('inNote').value = '';
@@ -401,7 +409,7 @@
 
       if (!student || !date || !price || !time) {
         haptic('warning');
-        if (tg?.showAlert) tg.showAlert('Заполните ученика, дату, время и цену');
+        if (tg?.showAlert) tg.showAlert('Заполните ученика, дату, время и стоимость');
         return;
       }
 
@@ -454,11 +462,11 @@
     };
 
     // ==========================================
-    // ГОЛОСОВОЙ ПОМОЩНИК
+    // ГОЛОСОВОЙ ПОМОЩНИК С РАСШИРЕННЫМ РАСПОЗНАВАНИЕМ
     // ==========================================
     let recognition = null;
     let isListening = false;
-    let accumulatedTranscript = '';
+    let latestRecognizedText = '';
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -469,31 +477,27 @@
 
       recognition.onstart = () => {
         isListening = true;
-        accumulatedTranscript = '';
+        latestRecognizedText = '';
         document.getElementById('voiceBtn').classList.add('mic-active');
         const st = document.getElementById('voiceStatus');
-        st.innerText = 'Слушаю... Нажмите еще раз для стопа';
+        st.innerText = 'Слушаю вас... Нажмите еще раз, чтобы применить';
         st.classList.remove('hidden');
         haptic('light');
       };
 
       recognition.onresult = (e) => {
-        let interim = '';
-        for (let i = e.resultIndex; i < e.results.length; ++i) {
-          if (e.results[i].isFinal) {
-            accumulatedTranscript += ' ' + e.results[i][0].transcript;
-          } else {
-            interim += e.results[i][0].transcript;
-          }
+        let full = '';
+        for (let i = 0; i < e.results.length; ++i) {
+          full += ' ' + e.results[i][0].transcript;
         }
-        const currentDisplay = (accumulatedTranscript + ' ' + interim).trim();
-        if (currentDisplay) {
-          document.getElementById('voiceStatus').innerText = `«${currentDisplay}»`;
+        latestRecognizedText = full.trim();
+        if (latestRecognizedText) {
+          document.getElementById('voiceStatus').innerText = `«${latestRecognizedText}»`;
         }
       };
 
       recognition.onerror = (err) => {
-        console.error('Speech error:', err);
+        console.warn('Speech err:', err);
       };
 
       recognition.onend = () => {
@@ -514,15 +518,16 @@
         recognition.stop();
         document.getElementById('voiceBtn').classList.remove('mic-active');
 
-        const finalCommand = accumulatedTranscript.trim();
-        if (finalCommand) {
-          parseVoiceCommand(finalCommand);
+        const cmd = latestRecognizedText.trim();
+        if (cmd) {
+          parseVoiceCommand(cmd);
         } else {
-          document.getElementById('voiceStatus').classList.add('hidden');
+          document.getElementById('voiceStatus').innerText = 'Ничего не услышал';
+          setTimeout(() => document.getElementById('voiceStatus').classList.add('hidden'), 2000);
         }
       } else {
-        accumulatedTranscript = '';
-        recognition.start();
+        latestRecognizedText = '';
+        try { recognition.start(); } catch(e) {}
       }
     }
 
@@ -557,24 +562,73 @@
       const targetISO = toISO(targetDate);
       const statusBanner = document.getElementById('voiceStatus');
 
-      // 1. УДАЛЕНИЕ
+      // 1. УДАЛЕНИЕ ("удали", "убери", "стереть")
       if (txt.includes('удали') || txt.includes('удалить') || txt.includes('убери') || txt.includes('сотри')) {
-        const idx = lessons.findIndex(l => l.date === targetISO);
+        let idx = lessons.findIndex(l => l.date === targetISO);
+        // Если по дате не нашли, пробуем найти по имени
+        if (idx === -1) {
+          idx = lessons.findIndex(l => txt.includes(l.student.toLowerCase()));
+        }
         if (idx !== -1) {
           const deleted = lessons.splice(idx, 1)[0];
           saveData();
           haptic('warning');
-          statusBanner.innerText = `Урок (${deleted.student}) удален`;
+          statusBanner.innerText = `Урок (${deleted.student}) удалён`;
           setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         } else {
-          statusBanner.innerText = `На дату ${targetISO} уроков нет`;
+          statusBanner.innerText = `Урок на эту дату не найден`;
           setTimeout(() => statusBanner.classList.add('hidden'), 3000);
           return;
         }
       }
 
-      // 2. ИЗМЕНЕНИЕ ИМЕНИ
+      // 2. СМЕНА СТАТУСА: ПРОЙДЕН / СОСТОЯЛСЯ (богатый словарь синонимов)
+      const successKeywords = [
+        'проведен', 'проведён', 'состоялся', 'был урок', 'прошел', 'прошёл',
+        'успешно', 'отзанимались', 'провели', 'закончили', 'оплатил',
+        'занимались', 'сделали', 'отвели', 'всё ок', 'все ок'
+      ];
+      if (successKeywords.some(w => txt.includes(w))) {
+        let found = lessons.find(l => l.date === targetISO);
+        if (!found) {
+          found = lessons.find(l => txt.includes(l.student.toLowerCase()));
+        }
+        if (found) {
+          found.status = 'completed';
+          selectedDate = new Date(found.date + 'T00:00:00');
+          currentDate = new Date(selectedDate);
+          saveData();
+          haptic('success');
+          statusBanner.innerText = `Урок (${found.student}): Проведён ✓`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+          return;
+        }
+      }
+
+      // 3. СМЕНА СТАТУСА: ОТМЕНЁН / НЕ БЫЛО
+      const cancelKeywords = [
+        'отменен', 'отменён', 'не состоялся', 'не был', 'сорвался',
+        'заболел', 'перенесли', 'отменили', 'пропустил', 'не пришел'
+      ];
+      if (cancelKeywords.some(w => txt.includes(w))) {
+        let found = lessons.find(l => l.date === targetISO);
+        if (!found) {
+          found = lessons.find(l => txt.includes(l.student.toLowerCase()));
+        }
+        if (found) {
+          found.status = 'canceled';
+          selectedDate = new Date(found.date + 'T00:00:00');
+          currentDate = new Date(selectedDate);
+          saveData();
+          haptic('warning');
+          statusBanner.innerText = `Урок (${found.student}): Отменён ✕`;
+          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+          return;
+        }
+      }
+
+      // 4. ИЗМЕНЕНИЕ ИМЕНИ
       if (txt.includes('имя') || txt.includes('назови') || txt.includes('переименуй')) {
         const nameMatch = txt.match(/(?:на|ученика|имя)\s+([А-Яа-яA-Za-z]+)/);
         if (nameMatch) {
@@ -584,44 +638,15 @@
             targetLesson.student = newName;
             saveData();
             haptic('success');
-            statusBanner.innerText = `Имя обновлено: ${newName}`;
+            statusBanner.innerText = `Имя изменено на: ${newName}`;
             setTimeout(() => statusBanner.classList.add('hidden'), 3000);
             return;
           }
         }
       }
 
-      // 3. СМЕНА СТАТУСА
-      if (txt.includes('проведен') || txt.includes('проведён') || txt.includes('был урок') || txt.includes('состоялся')) {
-        const found = lessons.find(l => l.date === targetISO);
-        if (found) {
-          found.status = 'completed';
-          selectedDate = targetDate;
-          currentDate = new Date(targetDate);
-          saveData();
-          haptic('success');
-          statusBanner.innerText = `Статус: проведён`;
-          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
-          return;
-        }
-      }
-
-      if (txt.includes('отменен') || txt.includes('отменён') || txt.includes('не состоялся') || txt.includes('не был')) {
-        const found = lessons.find(l => l.date === targetISO);
-        if (found) {
-          found.status = 'canceled';
-          selectedDate = targetDate;
-          currentDate = new Date(targetDate);
-          saveData();
-          haptic('warning');
-          statusBanner.innerText = `Статус: отменён`;
-          setTimeout(() => statusBanner.classList.add('hidden'), 3000);
-          return;
-        }
-      }
-
-      // 4. ДОБАВЛЕНИЕ УРОКА
-      if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь')) {
+      // 5. СОЗДАНИЕ УРОКА ("добавить", "запиши", "новый урок")
+      if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь') || txt.includes('урок')) {
         let time = '14:00';
         const timeMatch = txt.match(/(?:в\s*)?(\d{1,2})(?::(\d{2})|\s+(\d{2}))?/);
         if (timeMatch && parseInt(timeMatch[1]) < 24) {
