@@ -86,7 +86,7 @@
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Кастомный iOS Switcher */
+    /* iOS Switcher */
     .switch-track {
       width: 44px;
       height: 24px;
@@ -115,7 +115,7 @@
 
     /* TabBar */
     .tabbar-blur {
-      background: rgba(15, 18, 26, 0.9);
+      background: rgba(15, 18, 26, 0.92);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -125,7 +125,7 @@
 <body class="p-4 pb-32 select-none">
 
   <!-- ============================================== -->
-  <!-- ВКЛАДКА 1: ОСНОВНОЙ ЖУРНАЛ И ДОХОД             -->
+  <!-- ВКЛАДКА 1: ЖУРНАЛ И ДОХОД                      -->
   <!-- ============================================== -->
   <main id="tabJournal" class="space-y-4">
     <!-- ШАПКА -->
@@ -135,7 +135,8 @@
         <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
       </div>
       <div class="flex items-center gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
-        <button onclick="openPdfReportModal()" title="Сформировать отчет" class="p-2 text-indigo-400 hover:text-white active:scale-90 transition">
+        <!-- Кнопка отчета -->
+        <button onclick="openReportModal()" title="Сформировать отчет" class="p-2 text-indigo-400 hover:text-white active:scale-90 transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -154,21 +155,18 @@
 
     <!-- СТАТИСТИКА: ДОХОД + ЗАДОЛЖЕННОСТИ -->
     <section class="grid grid-cols-3 gap-2.5">
-      <!-- Месячный заработок -->
       <div class="glass-card glow-cyan p-3.5 rounded-2xl relative overflow-hidden">
         <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход</span>
         <p id="monthTotal" class="text-lg sm:text-xl font-extrabold tracking-tight text-white">0 ₽</p>
         <span id="monthCompletedStat" class="text-[10px] text-slate-400 font-medium block mt-1">0 уроков</span>
       </div>
 
-      <!-- Счётчик задолженностей -->
       <div class="glass-card glow-amber p-3.5 rounded-2xl relative overflow-hidden border-amber-500/20">
         <span class="text-[9px] font-bold text-amber-400 uppercase tracking-wider block mb-1">Долги</span>
         <p id="debtsTotal" class="text-lg sm:text-xl font-extrabold tracking-tight text-amber-400">0 ₽</p>
         <span id="debtsCountStat" class="text-[10px] text-amber-300/70 font-medium block mt-1">0 должников</span>
       </div>
 
-      <!-- Доход за день -->
       <div class="glass-card glow-purple p-3.5 rounded-2xl relative overflow-hidden">
         <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">День</span>
         <p id="dayTotal" class="text-lg sm:text-xl font-extrabold tracking-tight text-white">0 ₽</p>
@@ -210,7 +208,6 @@
       <span id="totalStudentsBadge" class="text-xs font-bold text-slate-400 bg-[#171B26] px-3 py-1.5 rounded-xl border border-white/5">0 человек</span>
     </header>
 
-    <!-- Поиск ученика -->
     <div class="relative">
       <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -218,7 +215,6 @@
       <input id="searchStudentInput" oninput="renderStudentsDirectory()" type="text" placeholder="Поиск по имени ученика..." class="w-full pl-10 pr-3.5 py-3 rounded-xl text-xs font-medium">
     </div>
 
-    <!-- Список всех учеников со статистикой -->
     <div id="studentsDirectoryList" class="space-y-3"></div>
   </main>
 
@@ -240,7 +236,7 @@
   </div>
 
   <!-- ============================================== -->
-  <!-- TAB BAR (Iconimate Icons)                      -->
+  <!-- TAB BAR                                        -->
   <!-- ============================================== -->
   <nav class="fixed bottom-0 left-0 right-0 h-20 tabbar-blur flex items-center justify-around px-8 z-40">
     <button id="tabBtnJournal" onclick="switchTab('journal')" class="flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95">
@@ -366,7 +362,7 @@
     </div>
   </div>
 
-  <!-- КАРТОЧКА УЧЕНИКА С РАЗНОЦВЕТНЫМИ АВАТАРАМИ -->
+  <!-- КАРТОЧКА УЧЕНИКА -->
   <div id="studentModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeStudentModal()">
     <div class="min-h-full flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[28px] p-6 space-y-5 max-h-[90vh] overflow-y-auto pb-10">
@@ -385,7 +381,6 @@
           <button onclick="closeStudentModal()" class="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
         </div>
 
-        <!-- 4 Метрики (включая Задолженность) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
             <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Принёс</span>
@@ -427,50 +422,54 @@
     </div>
   </div>
 
-  <!-- ОКНО ЭКСПОРТА И СОХРАНЕНИЯ PDF / ОТЧЁТА -->
-  <div id="pdfReportModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden z-50 overflow-y-auto p-4 sm:p-6 flex flex-col items-center">
-    <div class="w-full max-w-2xl bg-white text-slate-900 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 my-auto">
+  <!-- ОКНО ФИНАНСОВОГО ОТЧЁТА (СВЕТЛЫЙ ЧИТАЕМЫЙ ЧЕК С БЕЗОПАСНЫМИ КНОПКАМИ) -->
+  <div id="pdfReportModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden z-50 overflow-y-auto p-3 sm:p-6 flex flex-col justify-end sm:justify-center items-center">
+    <div class="w-full max-w-xl bg-white text-slate-900 rounded-t-[30px] sm:rounded-3xl shadow-2xl p-5 sm:p-7 space-y-4 max-h-[92vh] overflow-y-auto">
       
-      <div class="flex flex-wrap items-center justify-between border-b pb-4 gap-2">
-        <button onclick="closePdfReportModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 active:scale-95 transition">
+      <!-- Верхняя навигация -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <button onclick="closeReportModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5 active:scale-95 transition">
           ← Назад в журнал
         </button>
-        <div class="flex items-center gap-2">
-          <button onclick="copyReportText()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl active:scale-95 transition">
-            📋 Текст
-          </button>
-          <button onclick="downloadHtmlPdfReceipt()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Скачать отчёт (.html)
-          </button>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">Сводка месяца</span>
+      </div>
+
+      <!-- Заголовок и цифры -->
+      <div class="flex items-start justify-between pt-1">
+        <div>
+          <h2 class="text-xl font-black text-slate-900">Отчёт преподавателя</h2>
+          <p id="pdfReportMonthLabel" class="text-xs font-semibold text-slate-500 mt-0.5">Сентябрь 2026</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Фактический доход</span>
+          <p id="pdfReportTotalEarned" class="text-xl font-black text-emerald-600">0 ₽</p>
         </div>
       </div>
 
-      <div id="printableReportArea" class="space-y-4">
-        <div class="flex items-start justify-between">
-          <div>
-            <h2 class="text-2xl font-black tracking-tight text-slate-900">Финансовый отчёт</h2>
-            <p id="pdfReportMonthLabel" class="text-sm font-semibold text-slate-500 mt-0.5">Сентябрь 2026</p>
-          </div>
-          <div class="text-right">
-            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Чистый доход</span>
-            <p id="pdfReportTotalEarned" class="text-2xl font-black text-emerald-600">0 ₽</p>
-          </div>
-        </div>
+      <!-- Таблица уроков -->
+      <div class="overflow-x-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
+            <tr>
+              <th class="p-2.5">Дата</th>
+              <th class="p-2.5">Ученик</th>
+              <th class="p-2.5">Статус</th>
+              <th class="p-2.5 text-right">Сумма</th>
+            </tr>
+          </thead>
+          <tbody id="pdfReportTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
+        </table>
+      </div>
 
-        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-          <table class="w-full text-left text-xs text-slate-700">
-            <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase font-bold text-slate-500">
-              <tr>
-                <th class="p-3">Дата / Время</th>
-                <th class="p-3">Ученик</th>
-                <th class="p-3">Статус</th>
-                <th class="p-3 text-right">Сумма</th>
-              </tr>
-            </thead>
-            <tbody id="pdfReportTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
-          </table>
-        </div>
+      <!-- Кнопки безопасного сохранения и отправки -->
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <button onclick="shareReportToTelegram()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          Отправить в чат
+        </button>
+        <button onclick="copyReportText()" class="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition">
+          Скопировать текст
+        </button>
       </div>
     </div>
   </div>
@@ -529,12 +528,12 @@
 
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v12');
+        const local = localStorage.getItem('tutor_lessons_v13');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v12', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v13', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
@@ -548,18 +547,15 @@
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v12', json);
+      localStorage.setItem('tutor_lessons_v13', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v12', json, (err) => {
+        tg.CloudStorage.setItem('tutor_lessons_v13', json, (err) => {
           if (err) console.warn("Cloud save warning:", err);
         });
       }
       render();
     }
 
-    // ==========================================
-    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК TAB BAR
-    // ==========================================
     function switchTab(tab) {
       haptic('light');
       const jTab = document.getElementById('tabJournal');
@@ -639,24 +635,21 @@
       const monthPrefix = `${year}-${pad(month + 1)}`;
       const selISO = toISO(selectedDate);
 
-      // Доход за текущий месяц (только оплаченные)
       const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix));
       const mEarned = mLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
       const mCompleted = mLessons.filter(l => l.status === 'completed').length;
       document.getElementById('monthTotal').innerText = `${mEarned.toLocaleString('ru-RU')} ₽`;
       document.getElementById('monthCompletedStat').innerText = `${mCompleted} уроков`;
 
-      // Расчёт задолженностей (статус 'debt')
       const allDebts = lessons.filter(l => l.status === 'debt');
       const debtAmount = allDebts.reduce((acc, l) => acc + Number(l.price), 0);
       document.getElementById('debtsTotal').innerText = `${debtAmount.toLocaleString('ru-RU')} ₽`;
       document.getElementById('debtsCountStat').innerText = `${allDebts.length} долг(ов)`;
 
-      // Доход за день
       const dayLessons = lessons.filter(l => l.date === selISO).sort((a,b) => (a.time || '').localeCompare(b.time || ''));
       const dEarned = dayLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
       document.getElementById('dayTotal').innerText = `${dEarned.toLocaleString('ru-RU')} ₽`;
-      document.getElementById('dayLessonsStat').innerText = `${dayLessons.length} записей`;
+      document.getElementById('dayLessonsStat').innerText = `${dayLessons.length} занятий`;
 
       const todayISO = toISO(new Date());
       const dateBadge = document.getElementById('activeDateBadge');
@@ -672,7 +665,7 @@
         listEl.innerHTML = `
           <div class="glass-card p-8 rounded-2xl text-center border-dashed border-white/10">
             <p class="text-sm font-semibold text-slate-400">На этот день уроков нет</p>
-            <p class="text-xs text-slate-600 mt-1">Нажмите «+ Новый урок» или надиктуйте микрофоном</p>
+            <p class="text-xs text-slate-600 mt-1">Нажмите «+ Новый урок» или используйте микрофон</p>
           </div>
         `;
         return;
@@ -743,14 +736,10 @@
       }).join('');
     }
 
-    // ==========================================
-    // ВКЛАДКА: КАТАЛОГ ВСЕХ УЧЕНИКОВ
-    // ==========================================
     function renderStudentsDirectory() {
       const search = (document.getElementById('searchStudentInput')?.value || '').toLowerCase().trim();
       const listEl = document.getElementById('studentsDirectoryList');
       
-      // Группировка уникальных учеников
       const names = [...new Set(lessons.map(l => l.student))].filter(n => n.toLowerCase().includes(search));
       document.getElementById('totalStudentsBadge').innerText = `${names.length} человек`;
 
@@ -789,9 +778,6 @@
       }).join('');
     }
 
-    // ==========================================
-    // ЛОГИКА КАСТОМНОГО ПЕРЕКЛЮЧАТЕЛЯ (SWITCHER)
-    // ==========================================
     function toggleCustomSwitch() {
       haptic('light');
       isRepeatEnabled = !isRepeatEnabled;
@@ -915,11 +901,9 @@
       closeModal();
     }
 
-    // Циклическое переключение статусов с учётом ДОЛГА
     function toggleStatus(id) {
       const item = lessons.find(l => l.id === id);
       if (!item) return;
-      // Цепочка: запланирован -> проведен -> в долг -> отменен
       const chain = ['scheduled', 'completed', 'debt', 'canceled'];
       const nextIdx = (chain.indexOf(item.status) + 1) % chain.length;
       item.status = chain[nextIdx];
@@ -1011,9 +995,9 @@
     }
 
     // ==========================================
-    // СВЕТЛЫЙ ЧИТАЕМЫЙ PDF / ОТЧЁТ (СКАЧИВАНИЕ)
+    // ЛОГИКА ОТЧЁТА (БЕЗОПАСНАЯ, БЕЗ СБОЯ TELEGRAM)
     // ==========================================
-    function openPdfReportModal() {
+    function openReportModal() {
       haptic('medium');
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -1044,10 +1028,10 @@
 
           return `
             <tr>
-              <td class="p-3 text-slate-900 font-semibold">${l.date} <span class="text-slate-500 font-normal">в ${l.time}</span></td>
-              <td class="p-3 font-bold text-slate-800">${l.student}</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${stClass}">${stText}</span></td>
-              <td class="p-3 text-right font-black text-slate-900">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
+              <td class="p-2.5 text-slate-900 font-semibold">${l.date.split('-')[2]}.${l.date.split('-')[1]} <span class="text-slate-400 font-normal">${l.time}</span></td>
+              <td class="p-2.5 font-bold text-slate-800">${l.student}</td>
+              <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${stClass}">${stText}</span></td>
+              <td class="p-2.5 text-right font-black text-slate-900">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
             </tr>
           `;
         }).join('');
@@ -1057,91 +1041,35 @@
       document.getElementById('pdfReportModal').classList.remove('hidden');
     }
 
-    function closePdfReportModal() {
+    function closeReportModal() {
       document.getElementById('pdfReportModal').classList.add('hidden');
     }
 
-    function downloadHtmlPdfReceipt() {
-      haptic('success');
+    // Отправка готового отчета в Telegram чат
+    function shareReportToTelegram() {
+      haptic('light');
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const monthPrefix = `${year}-${pad(month + 1)}`;
       const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-      
-      const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix))
-                              .sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
 
-      let earnedTotal = 0;
-      let rowsHtml = '';
-      mLessons.forEach(l => {
-        const isDone = l.status === 'completed';
-        const stText = isDone ? 'Проведён' : (l.status === 'debt' ? 'Долг' : (l.status === 'canceled' ? 'Отменён' : 'Запланирован'));
-        if (isDone) earnedTotal += Number(l.price) || 0;
-        rowsHtml += `
-          <tr style="border-bottom: 1px solid #e2e8f0;">
-            <td style="padding: 10px;">${l.date} ${l.time}</td>
-            <td style="padding: 10px; font-weight: bold;">${l.student}</td>
-            <td style="padding: 10px;">${stText}</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
-          </tr>
-        `;
-      });
+      const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix));
+      const earned = mLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
+      const debts = lessons.filter(l => l.status === 'debt').reduce((acc, l) => acc + Number(l.price), 0);
+      const done = mLessons.filter(l => l.status === 'completed').length;
 
-      const fileContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Отчёт_${monthPrefix}</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #1e293b; }
-            h1 { margin: 0; font-size: 24px; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; font-size: 13px; }
-            th { text-align: left; background: #f8fafc; padding: 10px; border-bottom: 2px solid #cbd5e1; }
-            .total { margin-top: 25px; text-align: right; font-size: 20px; font-weight: bold; color: #059669; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <h1>Финансовый отчёт преподавателя</h1>
-              <p style="color: #64748b; margin: 4px 0 0 0;">Период: ${monthNames[month]} ${year}</p>
-            </div>
-            <div style="text-align: right;">
-              <p style="margin: 0; color: #64748b; font-size: 12px;">Всего уроков</p>
-              <h2 style="margin: 0;">${mLessons.length}</h2>
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Дата / Время</th>
-                <th>Ученик</th>
-                <th>Статус</th>
-                <th style="text-align: right;">Сумма</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-          <div class="total">ИТОГО ДОХОД: ${earnedTotal.toLocaleString('ru-RU')} ₽</div>
-        </body>
-        </html>
-      `;
+      const text = `📊 Финансовый отчёт за ${monthNames[month]} ${year}\n` +
+                   `• Проведено занятий: ${done}\n` +
+                   `• Фактический заработок: ${earned.toLocaleString('ru-RU')} ₽\n` +
+                   `• Непогашенные долги: ${debts.toLocaleString('ru-RU')} ₽\n\n` +
+                   `Сформировано в «Журнале преподавателя»`;
 
-      const blob = new Blob([fileContent], { type: 'text/html;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Отчёт_Доход_${monthPrefix}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      if (tg?.showAlert) tg.showAlert('Отчёт сохранён на устройство!');
+      const shareUrl = `https://t.me/share/url?url=&text=${encodeURIComponent(text)}`;
+      if (tg?.openTelegramLink) {
+        tg.openTelegramLink(shareUrl);
+      } else {
+        window.open(shareUrl, '_blank');
+      }
     }
 
     function copyReportText() {
@@ -1155,7 +1083,7 @@
       const debts = lessons.filter(l => l.status === 'debt').reduce((acc, l) => acc + Number(l.price), 0);
       const done = mLessons.filter(l => l.status === 'completed').length;
 
-      const txt = `📊 Отчёт за ${monthNames[month]} ${year}:\n• Проведено: ${done}\n• Доход: ${earned.toLocaleString('ru-RU')} ₽\n• Общий долг учеников: ${debts.toLocaleString('ru-RU')} ₽`;
+      const txt = `📊 Отчёт за ${monthNames[month]} ${year}:\n• Проведено: ${done}\n• Доход: ${earned.toLocaleString('ru-RU')} ₽\n• Общий долг: ${debts.toLocaleString('ru-RU')} ₽`;
       
       navigator.clipboard.writeText(txt).then(() => {
         haptic('success');
@@ -1277,8 +1205,8 @@
 
       // 1. ОТЧЁТ
       if (txt.includes('отчет') || txt.includes('отчёт') || txt.includes('пдф') || txt.includes('pdf')) {
-        openPdfReportModal();
-        statusBanner.innerText = `Отчёт сформирован ✓`;
+        openReportModal();
+        statusBanner.innerText = `Отчёт открыт ✓`;
         setTimeout(() => statusBanner.classList.add('hidden'), 3000);
         return;
       }
@@ -1298,7 +1226,7 @@
         }
       }
 
-      // 3. ДОЛГ ("в долг", "не оплатил", "записал долг")
+      // 3. ДОЛГ
       if (txt.includes('долг') || txt.includes('не оплатил') || txt.includes('потом переведет')) {
         let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase())) ||
                     lessons.find(l => l.date === targetISO) ||
@@ -1381,7 +1309,7 @@
         }
       }
 
-      // 7. ДОБАВЛЕНИЕ УРОКА (С ПОВТОРОМ)
+      // 7. ДОБАВЛЕНИЕ УРОКА
       if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь') || txt.includes('урок')) {
         let time = '14:00';
         let remainingTxt = txt;
