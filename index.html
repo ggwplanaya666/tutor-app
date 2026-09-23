@@ -81,6 +81,33 @@
     .modal-enter {
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    /* Кастомный iOS Toggle Switch */
+    .switch-track {
+      width: 44px;
+      height: 24px;
+      background-color: #2D3748;
+      border-radius: 9999px;
+      transition: background-color 0.2s;
+      position: relative;
+    }
+    .switch-track.active {
+      background-color: #6366F1;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+    .switch-thumb {
+      width: 20px;
+      height: 20px;
+      background-color: #FFFFFF;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .switch-track.active .switch-thumb {
+      transform: translateX(20px);
+    }
   </style>
 </head>
 <body class="p-4 pb-28 select-none">
@@ -92,12 +119,14 @@
       <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
     </div>
     <div class="flex items-center gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
-      <!-- Кнопка экспорта отчета -->
-      <button onclick="exportMonthCSV()" title="Экспорт в Excel/CSV" class="p-2 text-indigo-400 hover:text-white active:scale-90 transition">
+      <!-- Кнопка PDF отчета -->
+      <button onclick="openPdfReportModal()" title="Сформировать отчет" class="p-2 text-indigo-400 hover:text-white active:scale-90 transition">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
       </button>
       <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
@@ -226,16 +255,24 @@
           </div>
         </div>
 
-        <!-- ТУМБЛЕР РЕГУЛЯРНОГО УРОКА -->
-        <div id="repeatSection" class="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2.5">
+        <!-- ТУМБЛЕР С ВИДИМОЙ АНИМИРОВАННОЙ ГАЛОЧКОЙ/ПЕРЕКЛЮЧАТЕЛЕМ -->
+        <div id="repeatSection" class="p-3.5 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3 cursor-pointer" onclick="toggleCustomSwitch()">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold text-white">Повторять каждую неделю</p>
-              <p class="text-[10px] text-slate-400 mt-0.5">Автоматически создать расписание</p>
+              <p class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>Повторять каждую неделю</span>
+                <span id="repeatStatusLabel" class="text-[10px] font-semibold text-slate-500 uppercase">Выкл</span>
+              </p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Создать серию регулярных занятий</p>
             </div>
-            <input type="checkbox" id="inRepeatToggle" onchange="toggleRepeatOptions(this.checked)" class="w-5 h-5 rounded-lg text-indigo-600 focus:ring-0">
+            
+            <!-- Интерактивный Switcher -->
+            <div id="customSwitchTrack" class="switch-track">
+              <div class="switch-thumb"></div>
+            </div>
           </div>
-          <div id="repeatOptions" class="hidden grid-cols-3 gap-2 pt-1 border-t border-white/5">
+          
+          <div id="repeatOptions" class="hidden grid-cols-3 gap-2 pt-2 border-t border-white/5" onclick="event.stopPropagation()">
             <button type="button" onclick="setRepeatWeeks(4)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white" data-weeks="4">4 недели</button>
             <button type="button" onclick="setRepeatWeeks(8)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-[#171B26] text-slate-400 border border-white/5" data-weeks="8">8 недель</button>
             <button type="button" onclick="setRepeatWeeks(12)" class="repeat-btn py-2 text-xs font-semibold rounded-xl bg-[#171B26] text-slate-400 border border-white/5" data-weeks="12">12 недель</button>
@@ -254,40 +291,106 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА УЧЕНИКА -->
+  <!-- КАРТОЧКА УЧЕНИКА (ПРЕМИАЛЬНЫЙ ДАШБОРД) -->
   <div id="studentModalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeStudentModal()">
     <div class="min-h-full flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[24px] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t sm:border border-white/10 rounded-t-[30px] sm:rounded-[28px] p-6 space-y-5 max-h-[90vh] overflow-y-auto pb-10">
         <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-1 sm:hidden"></div>
         
+        <!-- Верх профиля -->
         <div class="flex items-center justify-between pb-1">
-          <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Профиль ученика</span>
-            <h3 id="studentModalName" class="text-xl font-bold text-white tracking-tight">Алиса</h3>
+          <div class="flex items-center gap-3.5">
+            <div id="studentAvatarLetter" class="w-13 h-13 w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center font-extrabold text-xl text-white shadow-lg shadow-indigo-500/30">
+              А
+            </div>
+            <div>
+              <h3 id="studentModalName" class="text-xl font-bold text-white tracking-tight leading-tight">Алиса</h3>
+              <p class="text-xs text-indigo-400 font-semibold mt-0.5" id="studentSubText">Постоянный ученик</p>
+            </div>
           </div>
-          <button onclick="closeStudentModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
+          <button onclick="closeStudentModal()" class="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
         </div>
 
-        <!-- Статистика ученика -->
-        <div class="grid grid-cols-3 gap-2">
-          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
-            <span class="text-[9px] uppercase font-bold text-slate-400 block">Принёс</span>
+        <!-- Ключевые метрики -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="p-3.5 bg-[#171B26] rounded-2xl border border-white/5 text-center relative overflow-hidden">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Всего принёс</span>
             <p id="studentStatEarned" class="text-base font-extrabold text-emerald-400 mt-1">0 ₽</p>
           </div>
-          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
-            <span class="text-[9px] uppercase font-bold text-slate-400 block">Проведено</span>
-            <p id="studentStatDone" class="text-base font-extrabold text-white mt-1">0</p>
+          <div class="p-3.5 bg-[#171B26] rounded-2xl border border-white/5 text-center relative overflow-hidden">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Посещаемость</span>
+            <p id="studentStatRate" class="text-base font-extrabold text-indigo-400 mt-1">100%</p>
           </div>
-          <div class="p-3 bg-[#171B26] rounded-2xl border border-white/5 text-center">
-            <span class="text-[9px] uppercase font-bold text-slate-400 block">Отменено</span>
-            <p id="studentStatCanceled" class="text-base font-extrabold text-rose-400 mt-1">0</p>
+          <div class="p-3.5 bg-[#171B26] rounded-2xl border border-white/5 text-center relative overflow-hidden">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Средний чек</span>
+            <p id="studentStatAvg" class="text-base font-extrabold text-white mt-1">0 ₽</p>
+          </div>
+        </div>
+
+        <!-- Дополнительные плашки -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex items-center justify-between p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+            <span class="text-slate-400">Проведено уроков:</span>
+            <span id="studentStatDone" class="font-bold text-white">0</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+            <span class="text-slate-400">Отменено уроков:</span>
+            <span id="studentStatCanceled" class="font-bold text-rose-400">0</span>
           </div>
         </div>
 
         <!-- История занятий -->
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">История занятий</h4>
+          <div class="flex items-center justify-between mb-2 px-1">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Хронология занятий</h4>
+            <span class="text-[10px] text-slate-500 font-semibold" id="studentTotalHistoryCount">Всего: 0</span>
+          </div>
           <div id="studentHistoryList" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЧИТАЕМЫЙ PDF/ПЕЧАТНЫЙ ОТЧЁТ (СВЕТЛАЯ ТЕМА С КНОПКОЙ НАЗАД) -->
+  <div id="pdfReportModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden z-50 overflow-y-auto p-4 sm:p-6 flex flex-col items-center">
+    <div class="w-full max-w-2xl bg-white text-slate-900 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 my-auto">
+      
+      <!-- Панель управления отчетом -->
+      <div class="flex items-center justify-between border-b pb-4">
+        <button onclick="closePdfReportModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 active:scale-95 transition">
+          ← Назад в журнал
+        </button>
+        <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Печать / Сохранить в PDF
+        </button>
+      </div>
+
+      <!-- Содержимое отчета -->
+      <div id="printableReportArea" class="space-y-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-2xl font-black tracking-tight text-slate-900">Финансовый отчёт</h2>
+            <p id="pdfReportMonthLabel" class="text-sm font-semibold text-slate-500 mt-0.5">Сентябрь 2026</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Чистый доход</span>
+            <p id="pdfReportTotalEarned" class="text-2xl font-black text-emerald-600">0 ₽</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase font-bold text-slate-500">
+              <tr>
+                <th class="p-3">Дата / Время</th>
+                <th class="p-3">Ученик</th>
+                <th class="p-3">Статус</th>
+                <th class="p-3 text-right">Сумма</th>
+              </tr>
+            </thead>
+            <tbody id="pdfReportTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -306,6 +409,7 @@
     let currentDate = new Date();
     let selectedDate = new Date();
     let lessons = [];
+    let isRepeatEnabled = false;
     let repeatWeeksCount = 4;
 
     function haptic(type = 'light') {
@@ -322,18 +426,17 @@
       }, 300);
     }
 
-    // БЕЗОПАСНЫЙ ЛОКАЛЬНЫЙ ФОРМАТ ДАТЫ (Без сдвига UTC)
     const pad = (n) => String(n).padStart(2, '0');
     const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v9');
+        const local = localStorage.getItem('tutor_lessons_v10');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v9', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v10', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
@@ -347,9 +450,9 @@
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v9', json);
+      localStorage.setItem('tutor_lessons_v10', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v9', json, (err) => {
+        tg.CloudStorage.setItem('tutor_lessons_v10', json, (err) => {
           if (err) console.warn("Cloud save warning:", err);
         });
       }
@@ -455,7 +558,6 @@
           <div class="glass-card p-4 rounded-2xl space-y-3">
             <div class="flex items-start justify-between">
               <div>
-                <!-- Клик по имени открывает карточку ученика -->
                 <button onclick="openStudentModal('${l.student.replace(/'/g, "\\'")}')" class="text-left group flex items-center gap-1.5">
                   <h4 class="text-base font-bold text-white tracking-tight group-hover:text-indigo-400 transition">${l.student}</h4>
                   <svg class="w-3.5 h-3.5 text-slate-500 opacity-60 group-hover:opacity-100 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
@@ -499,20 +601,32 @@
     }
 
     // ==========================================
-    // ЛОГИКА ПОВТОРЯЮЩИХСЯ УРОКОВ
+    // ЛОГИКА КАСТОМНОГО ПЕРЕКЛЮЧАТЕЛЯ (SWITCHER)
     // ==========================================
-    function toggleRepeatOptions(show) {
-      const el = document.getElementById('repeatOptions');
-      if (show) {
-        el.classList.remove('hidden');
-        el.classList.add('grid');
+    function toggleCustomSwitch() {
+      haptic('light');
+      isRepeatEnabled = !isRepeatEnabled;
+      const track = document.getElementById('customSwitchTrack');
+      const label = document.getElementById('repeatStatusLabel');
+      const options = document.getElementById('repeatOptions');
+
+      if (isRepeatEnabled) {
+        track.classList.add('active');
+        label.innerText = 'Вкл';
+        label.className = 'text-[10px] font-bold text-indigo-400 uppercase';
+        options.classList.remove('hidden');
+        options.classList.add('grid');
       } else {
-        el.classList.add('hidden');
-        el.classList.remove('grid');
+        track.classList.remove('active');
+        label.innerText = 'Выкл';
+        label.className = 'text-[10px] font-semibold text-slate-500 uppercase';
+        options.classList.add('hidden');
+        options.classList.remove('grid');
       }
     }
 
     function setRepeatWeeks(count) {
+      haptic('light');
       repeatWeeksCount = count;
       document.querySelectorAll('.repeat-btn').forEach(btn => {
         const w = Number(btn.getAttribute('data-weeks'));
@@ -533,9 +647,15 @@
       document.getElementById('inStudent').value = '';
       document.getElementById('inPrice').value = '';
       document.getElementById('inNote').value = '';
+      
+      // Сброс переключателя
+      isRepeatEnabled = false;
+      document.getElementById('customSwitchTrack').classList.remove('active');
+      document.getElementById('repeatStatusLabel').innerText = 'Выкл';
+      document.getElementById('repeatStatusLabel').className = 'text-[10px] font-semibold text-slate-500 uppercase';
+      document.getElementById('repeatOptions').classList.add('hidden');
       document.getElementById('repeatSection').classList.remove('hidden');
-      document.getElementById('inRepeatToggle').checked = false;
-      toggleRepeatOptions(false);
+
       document.getElementById('modalBackdrop').classList.remove('hidden');
     }
 
@@ -551,7 +671,7 @@
       document.getElementById('inTime').value = item.time;
       document.getElementById('inPrice').value = item.price;
       document.getElementById('inNote').value = item.note || '';
-      document.getElementById('repeatSection').classList.add('hidden'); // Не дублируем при редактировании
+      document.getElementById('repeatSection').classList.add('hidden');
 
       document.getElementById('modalBackdrop').classList.remove('hidden');
     }
@@ -568,7 +688,6 @@
       const time = document.getElementById('inTime').value;
       const price = document.getElementById('inPrice').value;
       const note = document.getElementById('inNote').value.trim();
-      const isRepeat = document.getElementById('inRepeatToggle').checked;
 
       if (!student || !date || !price || !time) {
         haptic('warning');
@@ -586,9 +705,8 @@
           item.note = note;
         }
       } else {
-        // Создание одиночного или серии повторяющихся
         const [y, m, d] = date.split('-').map(Number);
-        const iterations = isRepeat ? repeatWeeksCount : 1;
+        const iterations = isRepeatEnabled ? repeatWeeksCount : 1;
 
         for (let i = 0; i < iterations; i++) {
           const targetDay = new Date(y, m - 1, d + 7 * i);
@@ -599,7 +717,7 @@
             time,
             price: Number(price),
             status: 'scheduled',
-            note: note + (isRepeat ? ` (${i + 1}/${iterations})` : '')
+            note: note + (isRepeatEnabled ? ` (${i + 1}/${iterations})` : '')
           });
         }
       }
@@ -635,21 +753,29 @@
     }
 
     // ==========================================
-    // КАРТОЧКА УЧЕНИКА И СТАТИСТИКА
+    // ПРОФИЛЬ УЧЕНИКА
     // ==========================================
     function openStudentModal(name) {
       haptic('light');
       document.getElementById('studentModalName').innerText = name;
+      document.getElementById('studentAvatarLetter').innerText = name.charAt(0).toUpperCase();
+
       const sLessons = lessons.filter(l => l.student.toLowerCase() === name.toLowerCase())
                               .sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
 
       const earned = sLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
       const done = sLessons.filter(l => l.status === 'completed').length;
       const canceled = sLessons.filter(l => l.status === 'canceled').length;
+      const total = done + canceled;
+      const rate = total > 0 ? Math.round((done / total) * 100) : 100;
+      const avg = done > 0 ? Math.round(earned / done) : (sLessons[0] ? Number(sLessons[0].price) : 0);
 
       document.getElementById('studentStatEarned').innerText = `${earned.toLocaleString('ru-RU')} ₽`;
       document.getElementById('studentStatDone').innerText = done;
       document.getElementById('studentStatCanceled').innerText = canceled;
+      document.getElementById('studentStatRate').innerText = `${rate}%`;
+      document.getElementById('studentStatAvg').innerText = `${avg.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('studentTotalHistoryCount').innerText = `Всего: ${sLessons.length}`;
 
       const historyEl = document.getElementById('studentHistoryList');
       if (sLessons.length === 0) {
@@ -658,18 +784,18 @@
         historyEl.innerHTML = sLessons.map(l => {
           const isDone = l.status === 'completed';
           const isCanceled = l.status === 'canceled';
-          const stColor = isDone ? 'text-emerald-400' : isCanceled ? 'text-rose-400' : 'text-amber-400';
+          const stColor = isDone ? 'text-emerald-400 bg-emerald-500/10' : isCanceled ? 'text-rose-400 bg-rose-500/10' : 'text-amber-400 bg-amber-500/10';
           const stText = isDone ? 'Проведён' : isCanceled ? 'Отменён' : 'План';
 
           return `
-            <div class="flex items-center justify-between p-2.5 bg-[#171B26] rounded-xl border border-white/5 text-xs">
+            <div class="flex items-center justify-between p-3 bg-[#171B26] rounded-xl border border-white/5 text-xs">
               <div>
-                <span class="font-bold text-white">${l.date}</span>
-                <span class="text-slate-500 ml-1">в ${l.time}</span>
+                <p class="font-bold text-white">${l.date} <span class="text-slate-500 font-normal">в ${l.time}</span></p>
+                ${l.note ? `<p class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[180px]">${l.note}</p>` : ''}
               </div>
-              <div class="flex items-center gap-2">
-                <span class="font-extrabold text-white">${Number(l.price).toLocaleString('ru-RU')} ₽</span>
-                <span class="${stColor} font-semibold">${stText}</span>
+              <div class="flex items-center gap-2.5">
+                <span class="font-extrabold text-white text-sm">${Number(l.price).toLocaleString('ru-RU')} ₽</span>
+                <span class="${stColor} px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase">${stText}</span>
               </div>
             </div>
           `;
@@ -684,48 +810,51 @@
     }
 
     // ==========================================
-    // ЭКСПОРТ В CSV / EXCEL (UTF-8 BOM)
+    // СВЕТЛЫЙ ЧИТАЕМЫЙ PDF / ПЕЧАТНЫЙ ОТЧЁТ
     // ==========================================
-    function exportMonthCSV() {
+    function openPdfReportModal() {
       haptic('medium');
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const monthPrefix = `${year}-${pad(month + 1)}`;
       const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
+      document.getElementById('pdfReportMonthLabel').innerText = `${monthNames[month]} ${year}`;
+
       const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix))
                               .sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
 
+      let earnedTotal = 0;
+      const tbody = document.getElementById('pdfReportTableBody');
+
       if (mLessons.length === 0) {
-        if (tg?.showAlert) tg.showAlert(`В ${monthNames[month]} ${year} нет занятий для выгрузки.`);
-        return;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">В этом месяце нет уроков для формирования отчета</td></tr>`;
+      } else {
+        tbody.innerHTML = mLessons.map(l => {
+          const isDone = l.status === 'completed';
+          const isCanceled = l.status === 'canceled';
+          if (isDone) earnedTotal += Number(l.price) || 0;
+
+          const stClass = isDone ? 'text-emerald-700 bg-emerald-50' : isCanceled ? 'text-rose-700 bg-rose-50' : 'text-amber-700 bg-amber-50';
+          const stText = isDone ? 'Проведён' : isCanceled ? 'Отменён' : 'План';
+
+          return `
+            <tr>
+              <td class="p-3 text-slate-900 font-semibold">${l.date} <span class="text-slate-500 font-normal">в ${l.time}</span></td>
+              <td class="p-3 font-bold text-slate-800">${l.student}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${stClass}">${stText}</span></td>
+              <td class="p-3 text-right font-black text-slate-900">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
+            </tr>
+          `;
+        }).join('');
       }
 
-      let csv = '\uFEFF'; // UTF-8 BOM для корректного открытия русских символов в Excel
-      csv += 'Дата;Время;Ученик;Статус;Стоимость (руб);Заметка\n';
+      document.getElementById('pdfReportTotalEarned').innerText = `${earnedTotal.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('pdfReportModal').classList.remove('hidden');
+    }
 
-      let totalEarned = 0;
-      mLessons.forEach(l => {
-        const isDone = l.status === 'completed';
-        const stText = isDone ? 'Проведён' : (l.status === 'canceled' ? 'Отменён' : 'Запланирован');
-        if (isDone) totalEarned += Number(l.price) || 0;
-        const cleanNote = (l.note || '').replace(/[\n\r;]/g, ' ');
-        csv += `${l.date};${l.time};${l.student};${stText};${l.price};${cleanNote}\n`;
-      });
-
-      csv += `\nИТОГО ЗАРАБОТАНО ЗА МЕСЯЦ;;;;${totalEarned};\n`;
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Отчёт_Уроки_${monthPrefix}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      if (tg?.showAlert) tg.showAlert(`Отчёт за ${monthNames[month]} сформирован и скачан!`);
+    function closePdfReportModal() {
+      document.getElementById('pdfReportModal').classList.add('hidden');
     }
 
     document.getElementById('prevMonthBtn').onclick = () => {
@@ -740,7 +869,7 @@
     };
 
     // ====================================================
-    // ГОЛОСОВОЙ ПОМОЩНИК
+    // ГОЛОСОВОЙ ПОМОЩНИК С ПОДДЕРЖКОЙ ПОВТОРОВ
     // ====================================================
     let recognition = null;
     let isListening = false;
@@ -758,7 +887,7 @@
         latestRecognizedText = '';
         document.getElementById('voiceBtn').classList.add('mic-active');
         const st = document.getElementById('voiceStatus');
-        st.innerText = 'Слушаю вас... Нажмите еще раз, чтобы применить';
+        st.innerText = 'Слушаю вас... Нажмите еще раз для стопа';
         st.classList.remove('hidden');
         haptic('light');
       };
@@ -840,23 +969,34 @@
       const targetISO = toISO(targetDate);
       const statusBanner = document.getElementById('voiceStatus');
 
-      // 1. КОМАНДА: ЭКСПОРТ ОТЧЕТА
-      if (txt.includes('отчет') || txt.includes('отчёт') || txt.includes('выгруз') || txt.includes('скачай')) {
-        exportMonthCSV();
-        statusBanner.innerText = `Отчет сформирован ✓`;
+      // 1. ОТЧЁТ
+      if (txt.includes('отчет') || txt.includes('отчёт') || txt.includes('пдф') || txt.includes('pdf')) {
+        openPdfReportModal();
+        statusBanner.innerText = `Отчёт сформирован ✓`;
         setTimeout(() => statusBanner.classList.add('hidden'), 3000);
         return;
       }
 
-      // 2. УДАЛЕНИЕ УРОКА
+      // 2. ПРОФИЛЬ УЧЕНИКА ("покажи ученика Алиса", "профиль Артем")
+      if (txt.includes('профиль') || txt.includes('ученик') || txt.includes('статистика')) {
+        const nameMatch = raw.match(/(?:профиль|ученика|ученик|статистика)\s+([А-Яа-яA-Za-z]+)/i);
+        if (nameMatch && nameMatch[1]) {
+          const sName = nameMatch[1];
+          const exists = lessons.some(l => l.student.toLowerCase().includes(sName.toLowerCase()));
+          if (exists) {
+            openStudentModal(sName);
+            statusBanner.innerText = `Профиль: ${sName} ✓`;
+            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
+            return;
+          }
+        }
+      }
+
+      // 3. УДАЛЕНИЕ
       if (txt.includes('удали') || txt.includes('удалить') || txt.includes('убери') || txt.includes('сотри')) {
         let idx = lessons.findIndex(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
-        if (idx === -1) {
-          idx = lessons.findIndex(l => l.date === targetISO);
-        }
-        if (idx === -1) {
-          idx = lessons.findIndex(l => txt.includes(l.student.toLowerCase()));
-        }
+        if (idx === -1) idx = lessons.findIndex(l => l.date === targetISO);
+        if (idx === -1) idx = lessons.findIndex(l => txt.includes(l.student.toLowerCase()));
 
         if (idx !== -1) {
           const deleted = lessons.splice(idx, 1)[0];
@@ -872,44 +1012,6 @@
         }
       }
 
-      // 3. ДОБАВИТЬ / ПЕРЕИМЕНОВАТЬ УЧЕНИКА
-      if (txt.includes('имя') || txt.includes('назови') || txt.includes('переименуй') || txt.includes('ученика зовут')) {
-        let newName = '';
-        const pattern = /(?:имя(?:\s+у)?(?:\s+ученика)?(?:\s+на)?|назови(?:\s+ученика)?|переименуй(?:\s+в)?|ученика\s+зовут)\s+([А-Яа-яA-Za-z]+)/i;
-        const match = raw.match(pattern);
-
-        if (match && match[1]) {
-          newName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-        } else {
-          const words = raw.split(/\s+/);
-          const candidate = words[words.length - 1].replace(/[.,!]/g, '');
-          if (candidate && candidate.length > 1) {
-            newName = candidate.charAt(0).toUpperCase() + candidate.slice(1);
-          }
-        }
-
-        if (newName) {
-          let targetLesson = lessons.find(l => l.date === targetISO) || 
-                             lessons.find(l => l.date === toISO(selectedDate)) ||
-                             lessons.find(l => l.student.toLowerCase().includes('ученик'));
-
-          if (targetLesson) {
-            targetLesson.student = newName;
-            selectedDate = new Date(targetLesson.date.replace(/-/g, '/'));
-            currentDate = new Date(selectedDate);
-            saveData();
-            haptic('success');
-            statusBanner.innerText = `Имя обновлено: ${newName} ✓`;
-            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
-            return;
-          } else {
-            statusBanner.innerText = `Не нашел урок для смены имени`;
-            setTimeout(() => statusBanner.classList.add('hidden'), 3000);
-            return;
-          }
-        }
-      }
-
       // 4. СМЕНА СТАТУСА: ПРОЙДЕН
       const successKeywords = [
         'проведен', 'проведён', 'состоялся', 'был урок', 'прошел', 'прошёл',
@@ -917,13 +1019,9 @@
         'занимались', 'сделали', 'отвели', 'всё ок', 'все ок'
       ];
       if (successKeywords.some(w => txt.includes(w))) {
-        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
-        if (!found) {
-          found = lessons.find(l => l.date === targetISO);
-        }
-        if (!found) {
-          found = lessons.find(l => txt.includes(l.student.toLowerCase()));
-        }
+        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase())) ||
+                    lessons.find(l => l.date === targetISO) ||
+                    lessons.find(l => txt.includes(l.student.toLowerCase()));
 
         if (found) {
           found.status = 'completed';
@@ -943,13 +1041,9 @@
         'заболел', 'перенесли', 'отменили', 'пропустил', 'не пришел'
       ];
       if (cancelKeywords.some(w => txt.includes(w))) {
-        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase()));
-        if (!found) {
-          found = lessons.find(l => l.date === targetISO);
-        }
-        if (!found) {
-          found = lessons.find(l => txt.includes(l.student.toLowerCase()));
-        }
+        let found = lessons.find(l => l.date === targetISO && txt.includes(l.student.toLowerCase())) ||
+                    lessons.find(l => l.date === targetISO) ||
+                    lessons.find(l => txt.includes(l.student.toLowerCase()));
 
         if (found) {
           found.status = 'canceled';
@@ -963,7 +1057,7 @@
         }
       }
 
-      // 6. ДОБАВЛЕНИЕ НОВОГО УРОКА
+      // 6. ДОБАВЛЕНИЕ УРОКА (С ПОДДЕРЖКОЙ ПОВТОРА)
       if (txt.includes('добав') || txt.includes('запиш') || txt.includes('создай') || txt.includes('поставь') || txt.includes('урок')) {
         let time = '14:00';
         let remainingTxt = txt;
@@ -988,21 +1082,38 @@
           student = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
         }
 
-        lessons.push({
-          id: 'ls_' + Date.now(),
-          student,
-          date: targetISO,
-          time,
-          price,
-          status: 'scheduled',
-          note: 'Добавлено голосом'
-        });
+        // Проверка на повторение в голосе ("каждую неделю", "повторять 8 недель")
+        let repeatCount = 1;
+        if (txt.includes('кажд') || txt.includes('повтор') || txt.includes('недел')) {
+          const weeksMatch = txt.match(/(\d{1,2})\s*недел/);
+          if (weeksMatch) {
+            repeatCount = parseInt(weeksMatch[1], 10);
+          } else {
+            repeatCount = 4; // Дефолт при упоминании повтора
+          }
+        }
+
+        const [y, m, d] = [targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()];
+        for (let i = 0; i < repeatCount; i++) {
+          const dt = new Date(y, m, d + 7 * i);
+          lessons.push({
+            id: 'ls_' + Date.now() + '_' + i,
+            student,
+            date: toISO(dt),
+            time,
+            price: Number(price),
+            status: 'scheduled',
+            note: repeatCount > 1 ? `Серия уроков (${i + 1}/${repeatCount})` : 'Добавлено голосом'
+          });
+        }
 
         selectedDate = targetDate;
         currentDate = new Date(targetDate);
         saveData();
         haptic('success');
-        statusBanner.innerText = `Урок добавлен: ${student}`;
+        statusBanner.innerText = repeatCount > 1 
+          ? `Создано ${repeatCount} уроков: ${student}` 
+          : `Урок добавлен: ${student}`;
         setTimeout(() => statusBanner.classList.add('hidden'), 3000);
         return;
       }
