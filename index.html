@@ -82,41 +82,63 @@
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* 3D Wheel Carousel для аватарок */
-    .wheel-scene {
-      perspective: 1000px;
+    /* ==================================================== */
+    /* 3D WHEEL CAROUSEL: ОТДАЛЕННАЯ ПАНОРАМНАЯ ПЕРСПЕКТИВА */
+    /* ==================================================== */
+    .wheel-stage {
+      perspective: 1600px;
       width: 100%;
-      height: 230px;
+      height: 270px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      touch-action: pan-y;
+      position: relative;
     }
-    .wheel-carousel {
+    
+    .wheel-orbit {
       width: 130px;
       height: 130px;
       position: relative;
       transform-style: preserve-3d;
-      transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+      transform: rotateX(-10deg);
+      transition: transform 0.5s cubic-bezier(0.2, 0.85, 0.3, 1);
     }
-    .wheel-cell {
+
+    .wheel-item {
       position: absolute;
-      width: 120px;
-      height: 120px;
-      left: 5px;
-      top: 5px;
+      width: 130px;
+      height: 130px;
+      left: 0;
+      top: 0;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 12px 25px rgba(0,0,0,0.5);
-      border: 3px solid rgba(255,255,255,0.15);
+      box-shadow: 0 18px 35px -8px rgba(0, 0, 0, 0.7);
+      border: 3px solid rgba(255, 255, 255, 0.18);
       cursor: pointer;
       user-select: none;
+      transition: filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+      background-clip: padding-box;
+    }
+
+    .wheel-item.is-selected {
+      border-color: #FFFFFF;
+      box-shadow: 0 0 25px rgba(99, 102, 241, 0.6), 0 20px 40px rgba(0,0,0,0.8);
+      opacity: 1 !important;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)) !important;
+    }
+
+    .wheel-item.is-dimmed {
+      opacity: 0.32;
+      filter: blur(1.5px) grayscale(40%);
     }
 
     /* Нижний стеклянный TabBar */
     .tabbar-blur {
-      background: rgba(15, 18, 26, 0.88);
+      background: rgba(15, 18, 26, 0.9);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -129,7 +151,6 @@
   <!-- ВКЛАДКА 1: ОСНОВНОЙ ЖУРНАЛ И ДОХОД             -->
   <!-- ============================================== -->
   <main id="tabJournal" class="space-y-5">
-    <!-- ШАПКА -->
     <header class="flex items-center justify-between pt-1">
       <div>
         <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
@@ -145,7 +166,6 @@
       </div>
     </header>
 
-    <!-- КАРТОЧКИ ДОХОДА -->
     <section class="grid grid-cols-2 gap-3">
       <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
@@ -166,12 +186,10 @@
       </div>
     </section>
 
-    <!-- ГОРИЗОНТАЛЬНЫЙ КАЛЕНДАРЬ -->
     <section>
       <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none"></div>
     </section>
 
-    <!-- СПИСОК УРОКОВ -->
     <section>
       <div class="flex items-center justify-between mb-3 px-1">
         <div class="flex items-center gap-2">
@@ -179,7 +197,6 @@
           <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
         </div>
         <button onclick="openModalForCreate()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
-          <!-- Iconimate Plus -->
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Новый урок
         </button>
@@ -190,45 +207,44 @@
   </main>
 
   <!-- ============================================== -->
-  <!-- ВКЛАДКА 2: ВЫБОР АВАТАРОК (КОЛЕСО ORI-GAMI)   -->
+  <!-- ВКЛАДКА 2: ВЫБОР АВАТАРОК (ОТДАЛЕННОЕ КОЛЕСО) -->
   <!-- ============================================== -->
   <main id="tabProfile" class="hidden space-y-6 pt-2">
     <header class="text-center">
       <span class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">Персонализация</span>
       <h2 class="text-2xl font-bold text-white mt-1">Оригами-Аватар</h2>
-      <p class="text-xs text-slate-400 mt-1">Вращайте колесо и выберите ваш талисман</p>
+      <p class="text-xs text-slate-400 mt-1">Свайпайте колесо или используйте стрелки</p>
     </header>
 
-    <!-- 3D КОЛЕСО -->
-    <div class="glass-card p-6 rounded-3xl border border-white/10 flex flex-col items-center relative overflow-hidden">
-      <div class="wheel-scene my-2">
-        <div id="avatarWheel" class="wheel-carousel">
-          <!-- Карточки аватарок заполняются JS -->
+    <div class="glass-card p-5 rounded-3xl border border-white/10 flex flex-col items-center relative overflow-hidden">
+      <!-- 3D Сцена с увеличенной глубиной и отдалением -->
+      <div id="stageEl" class="wheel-stage my-1">
+        <div id="avatarWheel" class="wheel-orbit">
+          <!-- Ячейки аватаров рендерятся из JS -->
         </div>
       </div>
 
       <!-- Кнопки управления вращением -->
-      <div class="flex items-center gap-4 mt-4">
+      <div class="flex items-center gap-4 mt-3 z-10">
         <button onclick="rotateWheel(-1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <button onclick="confirmSelectedAvatar()" class="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs tracking-wider uppercase shadow-lg shadow-indigo-600/30 active:scale-95 transition">
-          Выбрать этот
+        <button onclick="confirmSelectedAvatar()" class="px-7 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs tracking-wider uppercase shadow-xl shadow-indigo-600/30 active:scale-95 transition">
+          Установить аватар
         </button>
         <button onclick="rotateWheel(1)" class="w-11 h-11 rounded-2xl bg-[#171B26] border border-white/10 flex items-center justify-center text-white active:scale-90 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
 
-      <p id="currentAvatarName" class="text-sm font-bold text-indigo-300 mt-4 tracking-wide">Лазурный Дракон</p>
+      <p id="currentAvatarName" class="text-base font-extrabold text-indigo-300 mt-4 tracking-wide">Лазурный Дракончик</p>
     </div>
 
-    <!-- Инфо-карточка -->
     <div class="glass-card p-4 rounded-2xl flex items-center gap-3.5">
-      <div id="previewCurrentAvatar" class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-white/20"></div>
+      <div id="previewCurrentAvatar" class="w-13 h-13 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/20 p-0.5"></div>
       <div>
-        <h4 class="text-sm font-bold text-white">Текущий аватар сохранён</h4>
-        <p class="text-xs text-slate-400 mt-0.5">Отображается в панели таб-бара и профиле</p>
+        <h4 class="text-sm font-bold text-white">Текущий талисман активен</h4>
+        <p class="text-xs text-slate-400 mt-0.5">Синхронизируется в таб-баре и облаке Telegram</p>
       </div>
     </div>
   </main>
@@ -242,7 +258,6 @@
     </div>
     
     <button id="voiceBtn" onclick="toggleVoice()" class="w-14 h-14 rounded-2xl bg-[#1A1F2C] border border-white/10 flex items-center justify-center text-white shadow-2xl active:scale-90 transition">
-      <!-- Iconimate Mic -->
       <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -252,13 +267,11 @@
   </div>
 
   <!-- ============================================== -->
-  <!-- TAB BAR (Iconimate Icons + Live Avatar Tab)   -->
+  <!-- TAB BAR                                        -->
   <!-- ============================================== -->
-  <nav class="fixed bottom-0 left-0 right-0 h-20 tabbar-blur flex items-center justify-around px-6 z-40">
-    <!-- Вкладка Журнал -->
+  <nav class="fixed bottom-0 left-0 right-0 h-20 tabbar-blur flex items-center justify-around px-8 z-40">
     <button id="tabBtnJournal" onclick="switchTab('journal')" class="flex flex-col items-center gap-1 text-indigo-400 transition-all active:scale-95">
       <div class="p-1 rounded-xl">
-        <!-- Iconimate Calendar/Grid SVG -->
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -272,17 +285,16 @@
       <span class="text-[10px] font-bold tracking-wider uppercase">Журнал</span>
     </button>
 
-    <!-- Вкладка Аватарка (Колесо) -->
     <button id="tabBtnProfile" onclick="switchTab('profile')" class="flex flex-col items-center gap-1 text-slate-500 transition-all active:scale-95">
-      <div id="tabBarAvatarWrapper" class="w-7 h-7 rounded-full overflow-hidden border border-white/20 transition-transform">
-        <!-- Сюда динамически рендерится выбранная SVG-аватарка -->
+      <div id="tabBarAvatarWrapper" class="w-7 h-7 rounded-full overflow-hidden border border-white/25 transition-transform flex items-center justify-center">
+        <!-- Аватарка в таббаре -->
       </div>
       <span class="text-[10px] font-bold tracking-wider uppercase">Аватар</span>
     </button>
   </nav>
 
   <!-- ============================================== -->
-  <!-- МОДАЛЬНОЕ ОКНО (Создание и Редактирование)     -->
+  <!-- МОДАЛЬНОЕ ОКНО                                 -->
   <!-- ============================================== -->
   <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeModal()">
     <div class="min-h-full flex items-end sm:items-center justify-center">
@@ -296,25 +308,21 @@
 
         <input type="hidden" id="editLessonId" value="">
 
-        <!-- Поле: Ученик -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ученик и предмет</label>
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-              <!-- Iconimate User -->
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </span>
             <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full pl-10 pr-3.5 py-3.5 rounded-xl text-sm font-medium" onfocus="handleInputFocus(this)">
           </div>
         </div>
 
-        <!-- Поля: Дата и Время с иконками Iconimate -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Дата</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-400">
-                <!-- Iconimate Calendar Day Icon -->
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -329,7 +337,6 @@
             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Время</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-400">
-                <!-- Iconimate Clock Icon -->
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
@@ -340,7 +347,6 @@
           </div>
         </div>
 
-        <!-- Поле: Стоимость -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Стоимость (₽)</label>
           <div class="relative">
@@ -349,7 +355,6 @@
           </div>
         </div>
 
-        <!-- Поле: Заметка -->
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
           <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none" onfocus="handleInputFocus(this)"></textarea>
@@ -372,45 +377,84 @@
       if (tg.setBackgroundColor) tg.setBackgroundColor('#0B0D13');
     }
 
-    // ==========================================
-    // АВАТАРКИ: Оригами-талисманы (SVG)
-    // ==========================================
+    // ========================================================
+    // КРУПНЫЕ ГРАФИЧЕСКИЕ ОРИГАМИ-АВАТАРКИ (В СТИЛЕ РЕФЕРЕНСА)
+    // ========================================================
     const AVATARS = [
       {
         id: 'dragon',
         name: 'Лазурный Дракончик',
-        bg: 'linear-gradient(135deg, #10B981 0%, #064E3B 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><path d="M50 15 L70 35 L58 45 L78 60 L50 85 L35 60 L46 45 L30 35 Z" fill="#34D399"/><path d="M50 15 L58 45 L50 85 Z" fill="#059669"/><polygon points="70,35 88,38 78,60" fill="#6EE7B7"/><polygon points="30,35 12,38 35,60" fill="#047857"/></svg>`
+        bg: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <polygon points="50,8 72,32 58,44 86,56 50,92 28,62 44,46 22,34" fill="#34D399"/>
+          <polygon points="50,8 58,44 50,92 38,52" fill="#059669"/>
+          <polygon points="72,32 94,36 86,56" fill="#6EE7B7"/>
+          <polygon points="22,34 6,36 28,62" fill="#047857"/>
+          <polygon points="50,92 68,74 58,68" fill="#10B981"/>
+          <polygon points="50,8 60,20 50,26 40,20" fill="#A7F3D0"/>
+        </svg>`
       },
       {
         id: 'fox',
-        name: 'Огненная Лисица',
-        bg: 'linear-gradient(135deg, #F97316 0%, #7C2D12 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="50,22 68,48 50,78 32,48" fill="#FB923C"/><polygon points="50,22 68,48 50,78" fill="#EA580C"/><polygon points="32,48 18,26 36,36" fill="#FDBA74"/><polygon points="68,48 82,26 64,36" fill="#C2410C"/><polygon points="44,78 50,86 56,78" fill="#FFFFFF"/></svg>`
+        name: 'Огненный Лис',
+        bg: 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <polygon points="50,16 74,48 50,86 26,48" fill="#FB923C"/>
+          <polygon points="50,16 74,48 50,86" fill="#EA580C"/>
+          <polygon points="26,48 10,20 34,32" fill="#FDBA74"/>
+          <polygon points="74,48 90,20 66,32" fill="#9A3412"/>
+          <polygon points="40,74 50,86 60,74" fill="#FFFFFF"/>
+          <polygon points="46,82 50,86 54,82" fill="#1E293B"/>
+        </svg>`
       },
       {
         id: 'cat',
         name: 'Сиамский Кот',
         bg: 'linear-gradient(135deg, #38BDF8 0%, #0369A1 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="30,25 45,40 25,55" fill="#0F172A"/><polygon points="70,25 55,40 75,55" fill="#1E293B"/><polygon points="45,40 55,40 65,70 35,70" fill="#E2E8F0"/><polygon points="50,40 50,70 35,70" fill="#CBD5E1"/><polygon points="44,52 50,56 56,52" fill="#0284C7"/></svg>`
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <polygon points="24,18 44,38 18,58" fill="#0F172A"/>
+          <polygon points="76,18 56,38 82,58" fill="#1E293B"/>
+          <polygon points="44,38 56,38 72,82 28,82" fill="#E2E8F0"/>
+          <polygon points="50,38 50,82 28,82" fill="#CBD5E1"/>
+          <polygon points="38,50 50,56 62,50" fill="#0284C7"/>
+          <polygon points="46,62 50,66 54,62" fill="#0F172A"/>
+        </svg>`
       },
       {
         id: 'panda',
-        name: 'Бамбуковая Панда',
-        bg: 'linear-gradient(135deg, #A855F7 0%, #581C87 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><circle cx="50" cy="52" r="30" fill="#F8FAFC"/><polygon points="26,30 36,44 22,46" fill="#1E1B4B"/><polygon points="74,30 64,44 78,46" fill="#1E1B4B"/><polygon points="36,48 44,52 38,58" fill="#1E1B4B"/><polygon points="64,48 56,52 62,58" fill="#1E1B4B"/><polygon points="46,62 54,62 50,67" fill="#1E1B4B"/></svg>`
+        name: 'Оригами Панда',
+        bg: 'linear-gradient(135deg, #A855F7 0%, #6B21A8 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <circle cx="50" cy="52" r="36" fill="#F8FAFC"/>
+          <polygon points="20,24 36,40 16,46" fill="#1E1B4B"/>
+          <polygon points="80,24 64,40 84,46" fill="#1E1B4B"/>
+          <polygon points="32,46 44,52 36,60" fill="#1E1B4B"/>
+          <polygon points="68,46 56,52 64,60" fill="#1E1B4B"/>
+          <polygon points="44,66 56,66 50,72" fill="#1E1B4B"/>
+        </svg>`
       },
       {
         id: 'rabbit',
         name: 'Розовый Кролик',
-        bg: 'linear-gradient(135deg, #EC4899 0%, #831843 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="42,16 48,46 36,46" fill="#F472B6"/><polygon points="58,16 52,46 64,46" fill="#FB7185"/><polygon points="36,46 64,46 72,78 28,78" fill="#FDF2F8"/><polygon points="50,46 50,78 72,78" fill="#FCE7F3"/></svg>`
+        bg: 'linear-gradient(135deg, #EC4899 0%, #9D174D 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <polygon points="38,10 46,44 30,44" fill="#F472B6"/>
+          <polygon points="62,10 54,44 70,44" fill="#FB7185"/>
+          <polygon points="30,44 70,44 80,88 20,88" fill="#FDF2F8"/>
+          <polygon points="50,44 50,88 80,88" fill="#FCE7F3"/>
+          <polygon points="44,58 50,62 56,58" fill="#BE185D"/>
+        </svg>`
       },
       {
         id: 'bird',
         name: 'Птица Феникс',
-        bg: 'linear-gradient(135deg, #EAB308 0%, #713F12 100%)',
-        svg: `<svg viewBox="0 0 100 100" class="w-full h-full p-2"><polygon points="20,40 50,25 70,50 40,65" fill="#FDE047"/><polygon points="50,25 85,35 60,65" fill="#EAB308"/><polygon points="40,65 50,85 58,65" fill="#CA8A04"/></svg>`
+        bg: 'linear-gradient(135deg, #EAB308 0%, #854D0E 100%)',
+        svg: `<svg viewBox="0 0 100 100" class="w-[88%] h-[88%] drop-shadow-md">
+          <polygon points="14,40 50,18 78,50 38,72" fill="#FDE047"/>
+          <polygon points="50,18 92,30 68,70" fill="#EAB308"/>
+          <polygon points="38,72 50,92 64,68" fill="#CA8A04"/>
+          <polygon points="14,40 2,52 26,56" fill="#FACC15"/>
+        </svg>`
       }
     ];
 
@@ -422,23 +466,29 @@
       currentAvatarIndex = idx !== -1 ? idx : 0;
       renderWheel();
       updateTabBarAvatar();
+      setupWheelTouchSwipe();
     }
+
+    // ========================================================
+    // РЕНДЕР И ВРАЩЕНИЕ 3D КОЛЕСА (ОТДАЛЕННАЯ СЦЕНА)
+    // ========================================================
+    const WHEEL_RADIUS = 260; // Увеличенный радиус для эффекта отдаления
 
     function renderWheel() {
       const wheel = document.getElementById('avatarWheel');
       wheel.innerHTML = '';
       const total = AVATARS.length;
       const angleStep = 360 / total;
-      const radius = 135;
 
       AVATARS.forEach((av, i) => {
         const cell = document.createElement('div');
-        cell.className = 'wheel-cell';
+        cell.className = 'wheel-item';
+        cell.id = `wheelCell_${i}`;
         cell.style.background = av.bg;
         cell.innerHTML = av.svg;
 
         const phi = i * angleStep;
-        cell.style.transform = `rotateY(${phi}deg) translateZ(${radius}px)`;
+        cell.style.transform = `rotateY(${phi}deg) translateZ(${WHEEL_RADIUS}px)`;
 
         cell.onclick = () => {
           haptic('light');
@@ -457,7 +507,22 @@
       const angleStep = 360 / total;
       const wheel = document.getElementById('avatarWheel');
       const rotY = -currentAvatarIndex * angleStep;
-      wheel.style.transform = `rotateY(${rotY}deg)`;
+      
+      // Вращение орбиты с легким наклоном назад
+      wheel.style.transform = `rotateX(-10deg) rotateY(${rotY}deg)`;
+
+      // Подсветка центральной активной и затемнение фоновых
+      AVATARS.forEach((_, i) => {
+        const el = document.getElementById(`wheelCell_${i}`);
+        if (!el) return;
+        if (i === currentAvatarIndex) {
+          el.classList.add('is-selected');
+          el.classList.remove('is-dimmed');
+        } else {
+          el.classList.remove('is-selected');
+          el.classList.add('is-dimmed');
+        }
+      });
 
       const cur = AVATARS[currentAvatarIndex];
       document.getElementById('currentAvatarName').innerText = cur.name;
@@ -470,6 +535,31 @@
       applyWheelRotation();
     }
 
+    // Свайп жестами по экрану
+    function setupWheelTouchSwipe() {
+      const stage = document.getElementById('stageEl');
+      let startX = 0;
+      let isSwiping = false;
+
+      stage.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+      }, { passive: true });
+
+      stage.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        const diffX = e.changedTouches[0].clientX - startX;
+        if (Math.abs(diffX) > 40) {
+          if (diffX > 0) {
+            rotateWheel(-1); // свайп вправо -> вращение назад
+          } else {
+            rotateWheel(1);  // свайп влево -> вращение вперед
+          }
+        }
+        isSwiping = false;
+      }, { passive: true });
+    }
+
     function confirmSelectedAvatar() {
       const cur = AVATARS[currentAvatarIndex];
       selectedAvatarId = cur.id;
@@ -477,7 +567,7 @@
       if (tg?.CloudStorage) tg.CloudStorage.setItem('tutor_avatar_id', cur.id);
       haptic('success');
       updateTabBarAvatar();
-      if (tg?.showAlert) tg.showAlert(`Талисман «${cur.name}» установлен!`);
+      if (tg?.showAlert) tg.showAlert(`Талисман «${cur.name}» выбран!`);
     }
 
     function updateTabBarAvatar() {
@@ -494,7 +584,7 @@
     }
 
     // ==========================================
-    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК TAB BAR
+    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
     // ==========================================
     function switchTab(tab) {
       haptic('light');
@@ -521,7 +611,7 @@
     }
 
     // ==========================================
-    // ОСНОВНАЯ ЛОГИКА УРОКОВ
+    // ЛОГИКА УРОКОВ
     // ==========================================
     let currentDate = new Date();
     let selectedDate = new Date();
@@ -681,7 +771,6 @@
                 <h4 class="text-base font-bold text-white tracking-tight">${l.student}</h4>
                 <div class="flex items-center gap-2 mt-1">
                   <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded flex items-center gap-1">
-                    <!-- Iconimate Clock Mini -->
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     ${l.time}
                   </span>
@@ -700,9 +789,7 @@
                 <button onclick="toggleStatus('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 active:scale-95 transition">
                   Статус
                 </button>
-                <!-- КНОПКА РЕДАКТИРОВАНИЯ С ИКОНКОЙ ICONIMATE -->
                 <button onclick="openModalForEdit('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 active:scale-95 transition flex items-center gap-1">
-                  <!-- Iconimate Edit Pencil -->
                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
                     <path d="m15 5 4 4"></path>
@@ -711,7 +798,6 @@
                 </button>
               </div>
 
-              <!-- КНОПКА УДАЛЕНИЯ -->
               <button onclick="deleteLesson('${l.id}')" class="p-2 text-rose-400 hover:text-rose-300 active:scale-90">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
@@ -721,9 +807,6 @@
       }).join('');
     }
 
-    // ==========================================
-    // МОДАЛКА: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ
-    // ==========================================
     function openModalForCreate() {
       haptic('light');
       document.getElementById('editLessonId').value = '';
@@ -772,7 +855,6 @@
       }
 
       if (editId) {
-        // Режим обновления существующего урока
         const item = lessons.find(l => l.id === editId);
         if (item) {
           item.student = student;
@@ -782,7 +864,6 @@
           item.note = note;
         }
       } else {
-        // Режим создания нового
         lessons.push({
           id: 'ls_' + Date.now(),
           student, date, time, note,
