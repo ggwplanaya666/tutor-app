@@ -1,159 +1,184 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Учёт Уроков</title>
+  <title>Учёт уроков</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
-    /* CSS Переменные для интеграции темы Telegram */
-    :root {
-      --tg-bg: var(--tg-theme-bg-color, #f4f4f9);
-      --tg-sec-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-      --tg-text: var(--tg-theme-text-color, #000000);
-      --tg-hint: var(--tg-theme-hint-color, #999999);
-      --tg-link: var(--tg-theme-link-color, #2481cc);
-      --tg-btn: var(--tg-theme-button-color, #2481cc);
-      --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
-      --safe-area-top: env(safe-area-inset-top, 0px);
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-
+    
     body {
-      background-color: var(--tg-bg);
-      color: var(--tg-text);
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+      background-color: #0B0D13;
+      color: #F1F5F9;
+      min-height: 100vh;
       overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* Стилизация скроллбара */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
-
-    .tg-card {
-      background-color: var(--tg-sec-bg);
-      border-radius: 16px;
-      border: 1px solid rgba(0,0,0,0.03);
+    /* Премиум-карточки и стекло */
+    .glass-card {
+      background: linear-gradient(180deg, rgba(23, 27, 38, 0.95) 0%, rgba(17, 20, 29, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
 
-    /* Анимации для модального окна */
-    @keyframes slideInUp {
+    .glow-purple {
+      background: radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.18) 0%, transparent 60%);
+    }
+
+    .glow-cyan {
+      background: radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
+    }
+
+    /* Жесткая фиксация цвета полей на iOS */
+    input, textarea, select {
+      background-color: #171B26 !important;
+      color: #FFFFFF !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #6366F1 !important;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+    input::placeholder, textarea::placeholder {
+      color: #64748B !important;
+    }
+
+    /* Календарная горизонтальная лента */
+    .day-pill {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .day-pill.active {
+      background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Анимация модалки */
+    @keyframes slideUp {
       from { transform: translateY(100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-    .modal-animate { animation: slideInUp 0.25s ease-out; }
-
-    /* Сетка календаря */
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
+    .modal-enter {
+      animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .calendar-day {
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 10px;
-      cursor: pointer;
-      position: relative;
-    }
-    .calendar-day.other-month { color: var(--tg-hint); opacity: 0.5; }
-    .calendar-day.selected { background-color: var(--tg-btn); color: var(--tg-btn-text); }
-    .day-dot {
-      width: 4px;
-      height: 4px;
-      background-color: var(--tg-link);
-      border-radius: 50%;
-      position: absolute;
-      bottom: 4px;
-    }
-    .calendar-day.selected .day-dot { background-color: var(--tg-btn-text); }
   </style>
 </head>
-<body class="p-4 pb-28" style="margin-top: var(--safe-area-top)">
+<body class="p-4 pb-28 select-none">
 
-  <!-- ШАПКА: Календарь -->
-  <header class="mb-5 tg-card p-4 shadow-sm relative">
-    <div class="flex items-center justify-between mb-3 px-1">
-      <button id="prevMonth" class="text-xl font-bold p-1 text-blue-500 active:scale-95">&larr;</button>
-      <h1 id="monthYearLabel" class="text-lg font-bold capitalize tracking-tight text-center"></h1>
-      <button id="nextMonth" class="text-xl font-bold p-1 text-blue-500 active:scale-95">&rarr;</button>
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ: Месяц и переключение -->
+  <header class="flex items-center justify-between mb-4 pt-1">
+    <div>
+      <p class="text-[11px] font-semibold tracking-widest uppercase text-indigo-400">График & Доход</p>
+      <h1 id="monthTitle" class="text-xl font-bold tracking-tight text-white capitalize mt-0.5">Сентябрь 2026</h1>
     </div>
-
-    <div class="grid grid-cols-7 text-center text-xs font-semibold uppercase text-gray-500 tracking-wider mb-2">
-      <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-rose-500">Сб</div><div class="text-rose-500">Вс</div>
-    </div>
-    <div id="calendarGrid" class="calendar-grid"></div>
-  </header>
-
-  <!-- БЛОК: Статистика -->
-  <section class="mb-5 grid grid-cols-2 gap-3">
-    <div class="tg-card p-4 border border-slate-100 flex flex-col justify-center">
-      <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Доход <span id="statsMonthLabel">месяц</span></p>
-      <p id="monthEarned" class="text-2xl font-extrabold text-emerald-600 truncate">0 ₽</p>
-    </div>
-    <div class="tg-card p-4 border border-slate-100 flex flex-col justify-center text-right">
-      <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Уроков за <span id="statsDateLabel">сегодня</span></p>
-      <p id="dateLessonsCount" class="text-2xl font-extrabold text-slate-800">0 / 0</p>
-    </div>
-  </section>
-
-  <!-- БЛОК: Список уроков -->
-  <section>
-    <div class="flex items-center justify-between mb-3 pl-1">
-      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Уроки на <span id="currentDateLabel">день</span></h2>
-      <button onclick="openModal()" class="text-sm font-medium text-blue-600 bg-blue-100 px-4 py-1.5 rounded-full hover:bg-blue-200 active:scale-95 transition">
-        + Урок
+    <div class="flex gap-1.5 bg-[#171B26] p-1 rounded-xl border border-white/5">
+      <button id="prevMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button id="nextMonthBtn" class="p-2 text-slate-400 hover:text-white active:scale-90 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
       </button>
     </div>
-    <div id="lessonsList" class="space-y-3"></div>
+  </header>
+
+  <!-- СТАТИСТИКА ДОХОДА: Две неоновые карточки -->
+  <section class="grid grid-cols-2 gap-3 mb-5">
+    <div class="glass-card glow-cyan p-4 rounded-2xl relative overflow-hidden">
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Доход в месяц</span>
+      <p id="monthTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+      <div class="flex items-center gap-1.5 mt-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span id="monthCompletedStat" class="text-[11px] text-slate-400 font-medium">0 уроков</span>
+      </div>
+    </div>
+
+    <div class="glass-card glow-purple p-4 rounded-2xl relative overflow-hidden">
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Выбранный день</span>
+      <p id="dayTotal" class="text-2xl font-extrabold tracking-tight text-white">0 ₽</p>
+      <div class="flex items-center gap-1.5 mt-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+        <span id="dayLessonsStat" class="text-[11px] text-slate-400 font-medium">0 занятий</span>
+      </div>
+    </div>
   </section>
 
-  <!-- МОДАЛЬНОЕ ОКНО (Bottom Sheet) -->
-  <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-end justify-center p-0 z-50 overflow-hidden" onclick="if(event.target === this) closeModal()">
-    <div class="tg-card w-full max-w-lg p-5 rounded-t-3xl shadow-xl space-y-3.5 modal-animate relative max-h-[90vh] overflow-y-auto">
-      <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-1"></div>
-      <div class="flex justify-between items-center mb-1">
-        <h3 id="modalTitle" class="font-bold text-xl">Новый Урок</h3>
-        <button onclick="closeModal()" class="text-gray-400 p-2 text-2xl active:scale-90">&times;</button>
+  <!-- ГОРИЗОНТАЛЬНЫЙ КАЛЕНДАРЬ -->
+  <section class="mb-6">
+    <div id="daysRow" class="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
+      <!-- Генерируются дни месяца -->
+    </div>
+  </section>
+
+  <!-- СПИСОК УРОКОВ НА ВЫБРАННЫЙ ДЕНЬ -->
+  <section>
+    <div class="flex items-center justify-between mb-3 px-1">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Занятия</h2>
+        <span id="activeDateBadge" class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">Сегодня</span>
+      </div>
+      <button onclick="openModal()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Новый урок
+      </button>
+    </div>
+
+    <div id="lessonsList" class="space-y-3">
+      <!-- Список карточек -->
+    </div>
+  </section>
+
+  <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ -->
+  <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-end justify-center z-50 p-0" onclick="if(event.target === this) closeModal()">
+    <div class="modal-enter w-full max-w-lg bg-[#11141D] border-t border-white/10 rounded-t-[30px] p-6 space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-2"></div>
+      
+      <div class="flex items-center justify-between pb-1">
+        <h3 class="text-lg font-bold text-white tracking-tight">Добавить занятие</h3>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-90">✕</button>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1 pl-1">Ученик и предмет</label>
-        <input id="inStudent" type="text" placeholder="Имя (Математика)" class="w-full p-3 rounded-xl border border-gray-100 text-sm focus:border-blue-300 focus:ring-blue-100 focus:ring-2">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Ученик и предмет</label>
+        <input id="inStudent" type="text" placeholder="Алиса (Математика)" class="w-full p-3.5 rounded-xl text-sm font-medium">
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1 pl-1">Дата</label>
-          <input id="inDate" type="date" class="w-full p-3 rounded-xl border border-gray-100 text-sm">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Дата</label>
+          <input id="inDate" type="date" class="w-full p-3.5 rounded-xl text-sm font-medium">
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1 pl-1">Время</label>
-          <input id="inTime" type="time" step="600" class="w-full p-3 rounded-xl border border-gray-100 text-sm">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Время</label>
+          <input id="inTime" type="time" class="w-full p-3.5 rounded-xl text-sm font-medium">
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1 pl-1">Стоимость (₽)</label>
-        <input id="inPrice" type="number" placeholder="1500" class="w-full p-3 rounded-xl border border-gray-100 text-sm">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Стоимость (₽)</label>
+        <input id="inPrice" type="number" placeholder="2500" class="w-full p-3.5 rounded-xl text-sm font-medium">
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1 pl-1">Заметка к уроку</label>
-        <textarea id="inNote" rows="3" placeholder="Тема, ссылки или ДЗ..." class="w-full p-3 rounded-xl border border-gray-100 text-sm resize-none"></textarea>
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Заметка к уроку</label>
+        <textarea id="inNote" rows="2" placeholder="Тема урока, дз или ссылка на звонок..." class="w-full p-3.5 rounded-xl text-sm font-medium resize-none"></textarea>
       </div>
 
-      <div class="flex gap-2 pt-2">
-        <button onclick="saveLesson()" class="flex-1 bg-blue-600 text-white font-semibold py-3.5 rounded-xl active:scale-[0.97] transition">
-          Сохранить Урок
-        </button>
-      </div>
+      <button onclick="saveLesson()" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition">
+        Сохранить запись
+      </button>
     </div>
   </div>
 
@@ -163,210 +188,199 @@
       tg.ready();
       tg.expand();
       tg.enableClosingConfirmation();
-      if (tg.HeaderColor) tg.setHeaderColor('secondary_bg_color');
+      if (tg.setHeaderColor) tg.setHeaderColor('#0B0D13');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#0B0D13');
     }
 
-    // Инициализация дат
-    let calendarDate = new Date(); // Месяц в календаре
-    let selectedDate = new Date(); // Выбранный день
+    let currentDate = new Date();
+    let selectedDate = new Date();
     let lessons = [];
 
-    // Загрузка данных
-    function loadData() {
-      // 1. Локально
-      try {
-        const local = localStorage.getItem('tutor_lessons');
-        if (local) lessons = JSON.parse(local);
-      } catch(e) {}
+    // Haptic
+    function haptic(type = 'light') {
+      if (!tg?.HapticFeedback) return;
+      if (type === 'light') tg.HapticFeedback.impactOccurred('light');
+      if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+      if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+      if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+    }
 
-      // 2. Из облака Telegram
+    // Хранилище
+    function loadData() {
+      try {
+        const local = localStorage.getItem('tutor_lessons_v3');
+        if (local) lessons = JSON.parse(local);
+      } catch (e) {}
+
       if (tg?.CloudStorage) {
-        tg.showProgress();
-        tg.CloudStorage.getItem('tutor_lessons_v2', (err, val) => {
-          tg.hideProgress();
+        tg.CloudStorage.getItem('tutor_lessons_v3', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
-          } else { render(); } // Рендерим локальные если облака нет
+          } else {
+            render();
+          }
         });
       } else {
         render();
       }
     }
 
-    // Сохранение
     function saveData() {
-      const dataStr = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons', dataStr);
+      const json = JSON.stringify(lessons);
+      localStorage.setItem('tutor_lessons_v3', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v2', dataStr, (err) => {
-          if (err) console.error("Cloud save error:", err);
-        });
+        tg.CloudStorage.setItem('tutor_lessons_v3', json);
       }
       render();
     }
 
-    // Haptic feedback (вибрация)
-    function haptic(type = 'light') {
-      if (tg?.HapticFeedback) {
-        if (type === 'light') tg.HapticFeedback.impactOccurred('light');
-        if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
-        if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
-        if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
-      }
-    }
+    const pad = (n) => String(n).padStart(2, '0');
+    const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-    // Вспомогательные функции для дат
-    const isSameDay = (d1, d2) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-    const formatDateISO = (date) => date.toISOString().split('T')[0];
-    const formatPrice = (p) => Number(p).toLocaleString('ru-RU') + ' ₽';
-    const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    // Рендер календаря-ленты
+    function renderDaysRow() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+      const dayNames = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-    // ЛОГИКА КАЛЕНДАРЯ
-    function renderCalendar() {
-      const year = calendarDate.getFullYear();
-      const month = calendarDate.getMonth();
-      document.getElementById('monthYearLabel').innerText = `${monthNames[month]} ${year}`;
-      document.getElementById('statsMonthLabel').innerText = monthNames[month].slice(0, 3);
+      document.getElementById('monthTitle').innerText = `${monthNames[month]} ${year}`;
 
-      const grid = document.getElementById('calendarGrid');
-      grid.innerHTML = '';
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const container = document.getElementById('daysRow');
+      container.innerHTML = '';
 
-      const firstDay = new Date(year, month, 1).getDay(); // Вс=0, Пн=1...
-      const prevMonthDays = new Date(year, month, 0).getDate();
-      const currentMonthDays = new Date(year, month + 1, 0).getDate();
+      const selISO = toISO(selectedDate);
 
-      const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // Корректировка для Пн=0
+      for (let day = 1; day <= totalDays; day++) {
+        const dObj = new Date(year, month, day);
+        const iso = toISO(dObj);
+        const isSelected = iso === selISO;
+        const hasLessons = lessons.some(l => l.date === iso);
 
-      // Дни прошлого месяца
-      for (let i = adjustedFirstDay - 1; i >= 0; i--) {
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day other-month';
-        dayEl.innerText = prevMonthDays - i;
-        grid.appendChild(dayEl);
-      }
+        const btn = document.createElement('button');
+        btn.className = `day-pill flex-shrink-0 w-12 py-3 rounded-2xl border flex flex-col items-center justify-center gap-1 ${
+          isSelected 
+            ? 'active' 
+            : 'bg-[#171B26] border-white/5 text-slate-400 hover:border-white/10'
+        }`;
 
-      // Дни текущего месяца
-      for (let d = 1; d <= currentMonthDays; d++) {
-        const dateObj = new Date(year, month, d);
-        const dateStr = formatDateISO(dateObj);
-        
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day';
-        if (isSameDay(dateObj, new Date())) dayEl.classList.add('font-bold', 'text-blue-500');
-        if (isSameDay(dateObj, selectedDate)) dayEl.classList.add('selected');
+        btn.innerHTML = `
+          <span class="text-[10px] uppercase font-bold tracking-wider opacity-60">${dayNames[dObj.getDay()]}</span>
+          <span class="text-base font-bold ${isSelected ? 'text-white' : 'text-slate-200'}">${day}</span>
+          <span class="w-1.5 h-1.5 rounded-full ${hasLessons ? (isSelected ? 'bg-white' : 'bg-indigo-400') : 'bg-transparent'}"></span>
+        `;
 
-        dayEl.innerText = d;
-
-        // Точка если есть уроки
-        if (lessons.some(l => l.date === dateStr)) {
-          const dot = document.createElement('div');
-          dot.className = 'day-dot';
-          dayEl.appendChild(dot);
-        }
-
-        dayEl.onclick = () => {
-          haptic();
-          selectedDate = dateObj;
+        btn.onclick = () => {
+          haptic('light');
+          selectedDate = dObj;
           render();
         };
-        grid.appendChild(dayEl);
-      }
 
-      // Дни следующего месяца
-      const remainingCells = 42 - grid.children.length; // 6 строк по 7 дней
-      for (let i = 1; i <= remainingCells; i++) {
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day other-month';
-        dayEl.innerText = i;
-        grid.appendChild(dayEl);
+        container.appendChild(btn);
+
+        // Автоскролл к выбранному дню
+        if (isSelected) {
+          setTimeout(() => btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }), 50);
+        }
       }
     }
 
-    // ЛОГИКА СТАТИСТИКИ И СПИСКА УРОКОВ
-    function renderLessons() {
-      const dateStr = formatDateISO(selectedDate);
-      
-      // Заголовок даты
-      const df = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
-      const formattedDate = df.format(selectedDate);
-      document.getElementById('currentDateLabel').innerText = isSameDay(selectedDate, new Date()) ? 'Сегодня, ' + formattedDate : formattedDate;
-      document.getElementById('statsDateLabel').innerText = isSameDay(selectedDate, new Date()) ? 'сегодня' : formattedDate.split(' ')[0];
+    // Рендер статистики и списка
+    function render() {
+      renderDaysRow();
 
-      // Статистика месяца
-      const monthPrefix = dateStr.slice(0, 7); // ГГГГ-ММ
-      const monthLessons = lessons.filter(l => l.date.startsWith(monthPrefix));
-      const earnedMonth = monthLessons.reduce((sum, l) => sum + (l.status === 'completed' ? Number(l.price) : 0), 0);
-      document.getElementById('monthEarned').innerText = formatPrice(earnedMonth);
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const monthPrefix = `${year}-${pad(month + 1)}`;
+      const selISO = toISO(selectedDate);
 
-      // Статистика выбранного дня
-      const dayLessons = lessons
-        .filter(l => l.date === dateStr)
-        .sort((a,b) => a.time.localeCompare(b.time));
-      const completedDay = dayLessons.filter(l => l.status === 'completed').length;
-      document.getElementById('dateLessonsCount').innerText = `${completedDay} / ${dayLessons.length}`;
+      // Доход за месяц
+      const mLessons = lessons.filter(l => l.date.startsWith(monthPrefix));
+      const mEarned = mLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
+      const mCompleted = mLessons.filter(l => l.status === 'completed').length;
+      document.getElementById('monthTotal').innerText = `${mEarned.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('monthCompletedStat').innerText = `${mCompleted} из ${mLessons.length} проведено`;
 
-      // Список уроков
+      // Доход за день
+      const dayLessons = lessons.filter(l => l.date === selISO).sort((a,b) => a.time.localeCompare(b.time));
+      const dEarned = dayLessons.reduce((acc, l) => l.status === 'completed' ? acc + Number(l.price) : acc, 0);
+      document.getElementById('dayTotal').innerText = `${dEarned.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('dayLessonsStat').innerText = `${dayLessons.length} записей`;
+
+      // Бейдж даты
+      const todayISO = toISO(new Date());
+      const dateBadge = document.getElementById('activeDateBadge');
+      if (selISO === todayISO) {
+        dateBadge.innerText = 'Сегодня';
+      } else {
+        const df = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
+        dateBadge.innerText = df.format(selectedDate);
+      }
+
+      // Список занятий
       const listEl = document.getElementById('lessonsList');
       if (dayLessons.length === 0) {
-        listEl.innerHTML = `<div class="tg-card p-8 rounded-2xl text-center text-gray-400 text-xs italic">На этот день уроков нет</div>`;
+        listEl.innerHTML = `
+          <div class="glass-card p-8 rounded-2xl text-center border-dashed border-white/10">
+            <p class="text-sm font-semibold text-slate-400">На этот день уроков нет</p>
+            <p class="text-xs text-slate-600 mt-1">Нажмите «+ Новый урок», чтобы запланировать</p>
+          </div>
+        `;
         return;
       }
 
       listEl.innerHTML = dayLessons.map(l => {
         const isDone = l.status === 'completed';
         const isCanceled = l.status === 'canceled';
-        const badgeClass = isDone ? 'bg-emerald-100 text-emerald-800' :
-                           isCanceled ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
-        const badgeText = isDone ? '✓ Состоялся' : isCanceled ? '✕ Отменён' : '• Ждём';
+
+        const statusBg = isDone ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                         isCanceled ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                         'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        const statusText = isDone ? 'Проведён' : isCanceled ? 'Отменён' : 'Запланирован';
 
         return `
-          <div class="tg-card p-4 shadow-sm border border-slate-50 space-y-2.5">
-            <div class="flex justify-between items-start">
+          <div class="glass-card p-4 rounded-2xl space-y-3">
+            <div class="flex items-start justify-between">
               <div>
-                <p class="font-bold text-base leading-tight">${l.student}</p>
-                <p class="text-xs text-gray-400 mt-0.5">в ${l.time}</p>
+                <h4 class="text-base font-bold text-white tracking-tight">${l.student}</h4>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">${l.time}</span>
+                  <span class="text-sm font-extrabold text-white">${Number(l.price).toLocaleString('ru-RU')} ₽</span>
+                </div>
               </div>
-              <span class="text-[10px] font-bold px-3 py-1.5 rounded-full ${badgeClass} uppercase tracking-wider">${badgeText}</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${statusBg}">
+                ${statusText}
+              </span>
             </div>
 
-            ${l.note ? `<p class="text-[13px] text-gray-600 bg-gray-50 dark:bg-black/10 p-3 rounded-xl border border-gray-100 dark:border-white/5 leading-relaxed">${l.note}</p>` : ''}
+            ${l.note ? `<p class="text-xs text-slate-400 bg-white/[0.03] p-2.5 rounded-xl border border-white/5 leading-relaxed">${l.note}</p>` : ''}
 
-            <div class="flex justify-between items-center pt-1.5 border-t border-gray-50 dark:border-white/5">
-              <span class="font-extrabold text-slate-800 dark:text-white text-base">${formatPrice(l.price)}</span>
-              <div class="flex gap-2.5">
-                <button onclick="toggleStatus('${l.id}')" class="text-xs px-4 py-2 bg-gray-100 dark:bg-black/15 active:bg-gray-200 dark:active:bg-black/25 rounded-xl font-semibold text-gray-700 dark:text-gray-300">
-                  Статус
-                </button>
-                <button onclick="deleteLesson('${l.id}')" class="text-sm px-2 text-rose-500 active:scale-90 opacity-60">
-                  ✕
-                </button>
-              </div>
+            <div class="flex items-center justify-between pt-2 border-t border-white/5">
+              <button onclick="toggleStatus('${l.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 active:scale-95 transition">
+                Сменить статус
+              </button>
+              <button onclick="deleteLesson('${l.id}')" class="p-2 text-rose-400 hover:text-rose-300 active:scale-90">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // ОБЩИЙ РЕНДЕР
-    function render() {
-      renderCalendar();
-      renderLessons();
-    }
-
-    // ЛОГИКА МОДАЛЬНОГО ОКНА И ОПЕРАЦИЙ
+    // Модалка
     function openModal() {
-      haptic();
-      document.getElementById('modalTitle').innerText = "Новый Урок";
-      document.getElementById('inDate').value = formatDateISO(selectedDate);
-      document.getElementById('inTime').value = "15:00"; // Default time
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('modal').classList.add('flex');
+      haptic('light');
+      document.getElementById('inDate').value = toISO(selectedDate);
+      document.getElementById('inTime').value = '14:00';
+      document.getElementById('modalBackdrop').classList.remove('hidden');
+      document.getElementById('modalBackdrop').classList.add('flex');
     }
 
     function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
-      document.getElementById('modal').classList.remove('flex');
-      // Очистка полей
+      document.getElementById('modalBackdrop').classList.add('hidden');
+      document.getElementById('modalBackdrop').classList.remove('flex');
       document.getElementById('inStudent').value = '';
       document.getElementById('inPrice').value = '';
       document.getElementById('inNote').value = '';
@@ -381,13 +395,12 @@
 
       if (!student || !date || !price || !time) {
         haptic('warning');
-        tg.showAlert('Пожалуйста, заполни поля:\nУченик, Дата, Время и Стоимость');
+        if (tg?.showAlert) tg.showAlert('Заполните ученика, дату, время и цену');
         return;
       }
 
-      // Сохраняем как запланированный
       lessons.push({
-        id: 'lesson_' + Date.now(),
+        id: 'ls_' + Date.now(),
         student, date, time, note,
         price: Number(price),
         status: 'scheduled'
@@ -399,40 +412,42 @@
     }
 
     function toggleStatus(id) {
-      const index = lessons.findIndex(l => l.id === id);
-      if (index === -1) return;
-      const statuses = ['scheduled', 'completed', 'canceled'];
-      const currentIdx = statuses.indexOf(lessons[index].status);
-      lessons[index].status = statuses[(currentIdx + 1) % 3]; // Перебор по кругу
-      
-      haptic();
+      const item = lessons.find(l => l.id === id);
+      if (!item) return;
+      const chain = ['scheduled', 'completed', 'canceled'];
+      const nextIdx = (chain.indexOf(item.status) + 1) % 3;
+      item.status = chain[nextIdx];
+      haptic('medium');
       saveData();
     }
 
     function deleteLesson(id) {
-      tg.showConfirm("Ты точно хочешь удалить этот урок из истории?", (ok) => {
-        if (ok) {
-          lessons = lessons.filter(l => l.id !== id);
-          haptic('warning');
-          saveData();
-        }
-      });
+      if (tg?.showConfirm) {
+        tg.showConfirm('Удалить эту запись?', (ok) => {
+          if (ok) {
+            lessons = lessons.filter(l => l.id !== id);
+            haptic('warning');
+            saveData();
+          }
+        });
+      } else {
+        lessons = lessons.filter(l => l.id !== id);
+        saveData();
+      }
     }
 
-    // Обработчики кнопок месяца
-    document.getElementById('prevMonth').onclick = () => {
-      haptic();
-      calendarDate.setMonth(calendarDate.getMonth() - 1);
-      renderCalendar();
+    // Переключение месяца
+    document.getElementById('prevMonthBtn').onclick = () => {
+      haptic('light');
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      render();
+    };
+    document.getElementById('nextMonthBtn').onclick = () => {
+      haptic('light');
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      render();
     };
 
-    document.getElementById('nextMonth').onclick = () => {
-      haptic();
-      calendarDate.setMonth(calendarDate.getMonth() + 1);
-      renderCalendar();
-    };
-
-    // Старт
     loadData();
   </script>
 </body>
