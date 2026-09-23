@@ -219,7 +219,7 @@
   </main>
 
   <!-- ============================================== -->
-  <!-- ПЛАВАЮЩИЙ МИКРОФОН (Ассистент)                 -->
+  <!-- ПЛАВАЮЩИЙ МИКРОФОН                             -->
   <!-- ============================================== -->
   <div id="floatingVoiceWrap" class="fixed bottom-24 right-5 flex flex-col items-end z-40">
     <div id="voiceStatus" class="hidden mb-2 px-3 py-1.5 bg-[#171B26]/95 backdrop-blur-md border border-indigo-500/30 text-indigo-300 text-xs font-medium rounded-xl shadow-2xl max-w-[280px] break-words">
@@ -266,6 +266,69 @@
       <span class="text-[10px] font-bold tracking-wider uppercase">Ученики</span>
     </button>
   </nav>
+
+  <!-- ============================================== -->
+  <!-- ПОЛНОЭКРАННЫЙ ОТЧЁТ (PREMIUM DARK FULLSCREEN)  -->
+  <!-- ============================================== -->
+  <div id="pdfReportModal" class="fixed inset-0 bg-[#0B0D13] hidden z-50 overflow-y-auto flex flex-col p-4 pb-28">
+    <!-- Шапка отчета -->
+    <div class="flex items-center justify-between pb-4 border-b border-white/5 pt-1">
+      <button onclick="closeReportModal()" class="px-3.5 py-2 bg-[#171B26] hover:bg-[#202534] text-white font-bold text-xs rounded-xl flex items-center gap-2 border border-white/10 active:scale-95 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        Назад в журнал
+      </button>
+      <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">
+        Сводка месяца
+      </span>
+    </div>
+
+    <!-- Заголовок и карточка итогов -->
+    <div class="my-5 space-y-3">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-white">Финансовый отчёт</h2>
+        <p id="pdfReportMonthLabel" class="text-xs font-semibold text-slate-400 mt-0.5">Сентябрь 2026</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="glass-card glow-cyan p-4 rounded-2xl">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Фактический доход</span>
+          <p id="pdfReportTotalEarned" class="text-2xl font-black text-emerald-400 mt-1">0 ₽</p>
+        </div>
+        <div class="glass-card glow-amber p-4 rounded-2xl border-amber-500/20">
+          <span class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Остаток в долгах</span>
+          <p id="pdfReportTotalDebt" class="text-2xl font-black text-amber-400 mt-1">0 ₽</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Таблица занятий -->
+    <div class="glass-card rounded-2xl overflow-hidden border border-white/5">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-[#171B26] border-b border-white/5 text-[10px] uppercase font-bold text-slate-400">
+            <tr>
+              <th class="p-3">Дата / Время</th>
+              <th class="p-3">Ученик</th>
+              <th class="p-3">Статус</th>
+              <th class="p-3 text-right">Сумма</th>
+            </tr>
+          </thead>
+          <tbody id="pdfReportTableBody" class="divide-y divide-white/5 font-medium"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="grid grid-cols-2 gap-3 mt-6">
+      <button onclick="shareReportToTelegram()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95 transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+        Отправить в чат
+      </button>
+      <button onclick="copyReportText()" class="w-full py-4 bg-[#171B26] border border-white/10 hover:bg-[#202534] text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition">
+        Скопировать текст
+      </button>
+    </div>
+  </div>
 
   <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ / РЕДАКТИРОВАНИЯ -->
   <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 overflow-y-auto" onclick="if(event.target === this) closeModal()">
@@ -327,7 +390,6 @@
           </div>
         </div>
 
-        <!-- ТУМБЛЕР ПОВТОРА -->
         <div id="repeatSection" class="p-3.5 bg-white/[0.03] border border-white/10 rounded-2xl space-y-3 cursor-pointer" onclick="toggleCustomSwitch()">
           <div class="flex items-center justify-between">
             <div>
@@ -422,58 +484,6 @@
     </div>
   </div>
 
-  <!-- ОКНО ФИНАНСОВОГО ОТЧЁТА (СВЕТЛЫЙ ЧИТАЕМЫЙ ЧЕК С БЕЗОПАСНЫМИ КНОПКАМИ) -->
-  <div id="pdfReportModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden z-50 overflow-y-auto p-3 sm:p-6 flex flex-col justify-end sm:justify-center items-center">
-    <div class="w-full max-w-xl bg-white text-slate-900 rounded-t-[30px] sm:rounded-3xl shadow-2xl p-5 sm:p-7 space-y-4 max-h-[92vh] overflow-y-auto">
-      
-      <!-- Верхняя навигация -->
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <button onclick="closeReportModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5 active:scale-95 transition">
-          ← Назад в журнал
-        </button>
-        <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">Сводка месяца</span>
-      </div>
-
-      <!-- Заголовок и цифры -->
-      <div class="flex items-start justify-between pt-1">
-        <div>
-          <h2 class="text-xl font-black text-slate-900">Отчёт преподавателя</h2>
-          <p id="pdfReportMonthLabel" class="text-xs font-semibold text-slate-500 mt-0.5">Сентябрь 2026</p>
-        </div>
-        <div class="text-right">
-          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Фактический доход</span>
-          <p id="pdfReportTotalEarned" class="text-xl font-black text-emerald-600">0 ₽</p>
-        </div>
-      </div>
-
-      <!-- Таблица уроков -->
-      <div class="overflow-x-auto border border-slate-200 rounded-xl">
-        <table class="w-full text-left text-xs text-slate-700">
-          <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
-            <tr>
-              <th class="p-2.5">Дата</th>
-              <th class="p-2.5">Ученик</th>
-              <th class="p-2.5">Статус</th>
-              <th class="p-2.5 text-right">Сумма</th>
-            </tr>
-          </thead>
-          <tbody id="pdfReportTableBody" class="divide-y divide-slate-100 font-medium"></tbody>
-        </table>
-      </div>
-
-      <!-- Кнопки безопасного сохранения и отправки -->
-      <div class="grid grid-cols-2 gap-2.5 pt-2">
-        <button onclick="shareReportToTelegram()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-          Отправить в чат
-        </button>
-        <button onclick="copyReportText()" class="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition">
-          Скопировать текст
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script>
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -528,12 +538,12 @@
 
     function loadData() {
       try {
-        const local = localStorage.getItem('tutor_lessons_v13');
+        const local = localStorage.getItem('tutor_lessons_v14');
         if (local) lessons = JSON.parse(local);
       } catch (e) {}
 
       if (tg?.CloudStorage) {
-        tg.CloudStorage.getItem('tutor_lessons_v13', (err, val) => {
+        tg.CloudStorage.getItem('tutor_lessons_v14', (err, val) => {
           if (!err && val) {
             try { lessons = JSON.parse(val); render(); } catch(e) {}
           } else {
@@ -547,9 +557,9 @@
 
     function saveData() {
       const json = JSON.stringify(lessons);
-      localStorage.setItem('tutor_lessons_v13', json);
+      localStorage.setItem('tutor_lessons_v14', json);
       if (tg?.CloudStorage) {
-        tg.CloudStorage.setItem('tutor_lessons_v13', json, (err) => {
+        tg.CloudStorage.setItem('tutor_lessons_v14', json, (err) => {
           if (err) console.warn("Cloud save warning:", err);
         });
       }
@@ -995,7 +1005,7 @@
     }
 
     // ==========================================
-    // ЛОГИКА ОТЧЁТА (БЕЗОПАСНАЯ, БЕЗ СБОЯ TELEGRAM)
+    // ЛОГИКА ОТЧЁТА (FULLSCREEN DARK)
     // ==========================================
     function openReportModal() {
       haptic('medium');
@@ -1010,34 +1020,38 @@
                               .sort((a,b) => (a.date + a.time).localeCompare(b.date + b.time));
 
       let earnedTotal = 0;
+      let debtTotal = 0;
       const tbody = document.getElementById('pdfReportTableBody');
 
       if (mLessons.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">В этом месяце нет уроков для отчета</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-500">В этом месяце нет уроков для формирования отчёта</td></tr>`;
       } else {
         tbody.innerHTML = mLessons.map(l => {
           const isDone = l.status === 'completed';
           const isCanceled = l.status === 'canceled';
           const isDebt = l.status === 'debt';
+          
           if (isDone) earnedTotal += Number(l.price) || 0;
+          if (isDebt) debtTotal += Number(l.price) || 0;
 
-          const stClass = isDone ? 'text-emerald-700 bg-emerald-50' : 
-                          isDebt ? 'text-amber-700 bg-amber-50' : 
-                          isCanceled ? 'text-rose-700 bg-rose-50' : 'text-indigo-700 bg-indigo-50';
+          const stClass = isDone ? 'text-emerald-400 bg-emerald-500/10' : 
+                          isDebt ? 'text-amber-400 bg-amber-500/15' : 
+                          isCanceled ? 'text-rose-400 bg-rose-500/10' : 'text-indigo-400 bg-indigo-500/10';
           const stText = isDone ? 'Проведён' : isDebt ? 'Долг' : isCanceled ? 'Отменён' : 'План';
 
           return `
             <tr>
-              <td class="p-2.5 text-slate-900 font-semibold">${l.date.split('-')[2]}.${l.date.split('-')[1]} <span class="text-slate-400 font-normal">${l.time}</span></td>
-              <td class="p-2.5 font-bold text-slate-800">${l.student}</td>
-              <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${stClass}">${stText}</span></td>
-              <td class="p-2.5 text-right font-black text-slate-900">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
+              <td class="p-3 text-white font-semibold">${l.date.split('-')[2]}.${l.date.split('-')[1]} <span class="text-slate-500 font-normal">${l.time}</span></td>
+              <td class="p-3 font-bold text-slate-200">${l.student}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${stClass}">${stText}</span></td>
+              <td class="p-3 text-right font-black ${isDebt ? 'text-amber-400' : 'text-white'}">${Number(l.price).toLocaleString('ru-RU')} ₽</td>
             </tr>
           `;
         }).join('');
       }
 
       document.getElementById('pdfReportTotalEarned').innerText = `${earnedTotal.toLocaleString('ru-RU')} ₽`;
+      document.getElementById('pdfReportTotalDebt').innerText = `${debtTotal.toLocaleString('ru-RU')} ₽`;
       document.getElementById('pdfReportModal').classList.remove('hidden');
     }
 
@@ -1045,7 +1059,6 @@
       document.getElementById('pdfReportModal').classList.add('hidden');
     }
 
-    // Отправка готового отчета в Telegram чат
     function shareReportToTelegram() {
       haptic('light');
       const year = currentDate.getFullYear();
@@ -1206,7 +1219,7 @@
       // 1. ОТЧЁТ
       if (txt.includes('отчет') || txt.includes('отчёт') || txt.includes('пдф') || txt.includes('pdf')) {
         openReportModal();
-        statusBanner.innerText = `Отчёт открыт ✓`;
+        statusBanner.innerText = `Отчёт сформирован ✓`;
         setTimeout(() => statusBanner.classList.add('hidden'), 3000);
         return;
       }
